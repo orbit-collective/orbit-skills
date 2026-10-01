@@ -1,12 +1,13 @@
 import { getAgentAdapter } from "../adapters/index.js";
 import { updateSkill } from "../installation/update-skill.js";
 import { getAvailableSkills } from "../skills/catalog.js";
+import { withInstallationLock } from "../installation/lock.js";
 
 interface UpdateOptions {
     agent: string;
 }
 
-export async function updateSkills(
+export async function updateSkillsUnlocked(
     options: UpdateOptions,
 ): Promise<void> {
     const adapter = getAgentAdapter(options.agent);
@@ -26,4 +27,14 @@ export async function updateSkills(
             console.log(`  Backup: ${result.backupPath}`);
         }
     }
+}
+
+export async function updateSkills(
+    options: UpdateOptions,
+): Promise<void> {
+    const adapter = getAgentAdapter(options.agent);
+
+    await withInstallationLock(adapter, () =>
+        updateSkillsUnlocked(options),
+    );
 }

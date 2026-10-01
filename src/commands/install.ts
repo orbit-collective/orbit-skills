@@ -1,12 +1,13 @@
 import { getAgentAdapter } from "../adapters/index.js";
 import { installSkill } from "../installation/install-skill.js";
 import { getAvailableSkills } from "../skills/catalog.js";
+import { withInstallationLock } from "../installation/lock.js";
 
 interface InstallOptions {
     agent: string;
 }
 
-export async function installSkills(
+export async function installSkillsUnlocked(
     options: InstallOptions,
 ): Promise<void> {
     const adapter = getAgentAdapter(options.agent);
@@ -26,4 +27,14 @@ export async function installSkills(
     }
 
     console.log(`\nSkills directory: ${adapter.getSkillsDirectory()}`);
+}
+
+export async function installSkills(
+    options: InstallOptions,
+): Promise<void> {
+    const adapter = getAgentAdapter(options.agent);
+
+    await withInstallationLock(adapter, () =>
+        installSkillsUnlocked(options),
+    );
 }
