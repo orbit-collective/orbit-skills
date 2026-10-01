@@ -5,6 +5,7 @@ import { Command } from "commander";
 import { listSkills } from "./commands/list.js";
 import { showSkillsPath } from "./commands/path.js";
 import { installSkills } from "./commands/install.js";
+import { showSkillsStatus } from "./commands/status.js";
 
 const packageJson: unknown = JSON.parse(
     readFileSync(
@@ -47,6 +48,12 @@ program
     .description("Install available skills for an agent.")
     .requiredOption("--agent <id>", "Target agent.")
     .action(installSkills);
+
+program
+    .command("status")
+    .description("Compare installed skills with the package.")
+    .requiredOption("--agent <id>", "Target agent.")
+    .action(showSkillsStatus);
 
 program.action(() => {
     program.help();
