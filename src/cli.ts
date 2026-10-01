@@ -6,6 +6,7 @@ import { listSkills } from "./commands/list.js";
 import { showSkillsPath } from "./commands/path.js";
 import { installSkills } from "./commands/install.js";
 import { showSkillsStatus } from "./commands/status.js";
+import { updateSkills } from "./commands/update.js";
 import { packageVersion } from "./package-info.js";
 
 const packageJson: unknown = JSON.parse(
@@ -55,6 +56,12 @@ program
     .description("Compare installed skills with the package.")
     .requiredOption("--agent <id>", "Target agent.")
     .action(showSkillsStatus);
+
+program
+    .command("update")
+    .description("Update installed skills while protecting local changes.")
+    .requiredOption("--agent <id>", "Target agent.")
+    .action(updateSkills);
 
 program.action(() => {
     program.help();
