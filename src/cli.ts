@@ -1,6 +1,41 @@
 #!/usr/bin/env node
 
-const args = process.argv.slice(2);
+import { readFileSync } from "node:fs";
+import { Command } from "commander";
+import { listSkills } from "./commands/list.js";
 
-console.log("Orbit Skills");
-console.log("Arguments:", args);
+const packageJson: unknown = JSON.parse(
+    readFileSync(
+        new URL("../package.json", import.meta.url),
+        "utf8",
+    ),
+);
+
+if (
+    typeof packageJson !== "object" ||
+    packageJson === null ||
+    !("version" in packageJson) ||
+    typeof packageJson.version !== "string"
+) {
+    throw new Error("Missing or invalid version in package.json.");
+}
+
+const program = new Command();
+
+program
+    .name("orbit-skills")
+    .description("Manage shared AI agent skills.")
+    .version(packageJson.version)
+    .showHelpAfterError()
+    .showSuggestionAfterError();
+
+program
+    .command("list")
+    .description("List available skills.")
+    .action(listSkills);
+
+program.action(() => {
+    program.help();
+});
+
+program.parse();
