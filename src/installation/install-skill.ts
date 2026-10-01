@@ -27,7 +27,7 @@ function hasErrorCode(error: unknown, code: string): boolean {
     );
 }
 
-async function isManagedSkill(
+export async function isManagedSkill(
     directory: string,
     skillId: string,
 ): Promise<boolean> {
