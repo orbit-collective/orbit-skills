@@ -1,0 +1,40 @@
+{
+  "name": "@orbit-collective/skills",
+  "version": "0.1.0",
+  "description": "Shared AI agent skills for the Orbit ecosystem",
+  "keywords": [
+    "awesome",
+    "awesome-list",
+    "skills",
+    "agents",
+    "ai"
+  ],
+  "homepage": "https://github.com/orbit-collective/orbit-skills#readme",
+  "bugs": {
+    "url": "https://github.com/orbit-collective/orbit-skills/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/orbit-collective/orbit-skills.git"
+  },
+  "license": "MIT",
+  "author": "Adiksuu",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "orbit-skills": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "skills"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/cli.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.3",
+    "typescript": "^7.0.2"
+  }
+}
