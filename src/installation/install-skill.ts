@@ -4,7 +4,6 @@ import {
     mkdir,
     readFile,
     readdir,
-    writeFile,
 } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -13,6 +12,8 @@ import {
     type SkillDefinition,
 } from "../skills/catalog.js";
 import type { AgentAdapter } from "../adapters/types.js";
+import { getSkillFingerprint } from "./fingerprint.js";
+import { writeInstallationMetadata } from "./metadata.js";
 
 const OWNER = "@orbit-collective/skills";
 const MARKER_FILE = ".orbit-skill.json";
@@ -93,6 +94,23 @@ export async function installSkill(
             );
         }
 
+        const sourceFingerprint = await getSkillFingerprint(source);
+        const installedFingerprint =
+            await getSkillFingerprint(destination);
+
+        if (sourceFingerprint !== installedFingerprint) {
+            throw new Error(
+                `Skill "${skill.id}" differs from the package. ` +
+                "Installation files and metadata were left unchanged.",
+            );
+        }
+
+        await writeInstallationMetadata(
+            destination,
+            skill.id,
+            installedFingerprint,
+        );
+
         return "skipped";
     }
 
@@ -123,21 +141,20 @@ export async function installSkill(
             );
         }
 
-        await writeFile(
-            join(destination, MARKER_FILE),
-            JSON.stringify(
-                {
-                    schemaVersion: 1,
-                    managedBy: OWNER,
-                    skillId: skill.id,
-                },
-                null,
-                2,
-            ) + "\n",
-            {
-                encoding: "utf8",
-                flag: "wx",
-            },
+        const sourceFingerprint = await getSkillFingerprint(source);
+        const installedFingerprint =
+            await getSkillFingerprint(destination);
+
+        if (sourceFingerprint !== installedFingerprint) {
+            throw new Error(
+                `Copied files for "${skill.id}" do not match the source.`,
+            );
+        }
+
+        await writeInstallationMetadata(
+            destination,
+            skill.id,
+            installedFingerprint,
         );
     } catch (error) {
         throw new Error(
