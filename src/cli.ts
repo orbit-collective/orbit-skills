@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { Command } from "commander";
 import { listSkills } from "./commands/list.js";
 import { showSkillsPath } from "./commands/path.js";
+import { installSkills } from "./commands/install.js";
 
 const packageJson: unknown = JSON.parse(
     readFileSync(
@@ -40,6 +41,12 @@ program
     .description("Show the skills installation directory.")
     .requiredOption("--agent <id>", "Target agent.")
     .action(showSkillsPath);
+
+program
+    .command("install")
+    .description("Install available skills for an agent.")
+    .requiredOption("--agent <id>", "Target agent.")
+    .action(installSkills);
 
 program.action(() => {
     program.help();
