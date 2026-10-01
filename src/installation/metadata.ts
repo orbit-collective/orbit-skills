@@ -1,5 +1,10 @@
 import { randomUUID } from "node:crypto";
-import { rename, rm, writeFile } from "node:fs/promises";
+import {
+    readFile,
+    rename,
+    rm,
+    writeFile,
+} from "node:fs/promises";
 import { join } from "node:path";
 import { packageName, packageVersion } from "../package-info.js";
 
@@ -45,4 +50,42 @@ export async function writeInstallationMetadata(
     } finally {
         await rm(temporaryPath, { force: true });
     }
+}
+
+export async function readInstallationMetadata(
+    directory: string,
+    skillId: string,
+): Promise<InstallationMetadata | null> {
+    const value: unknown = JSON.parse(
+        await readFile(
+            join(directory, ".orbit-skill.json"),
+            "utf8",
+        ),
+    );
+
+    if (
+        typeof value !== "object" ||
+        value === null ||
+        !("schemaVersion" in value) ||
+        value.schemaVersion !== 1 ||
+        !("managedBy" in value) ||
+        value.managedBy !== packageName ||
+        !("skillId" in value) ||
+        value.skillId !== skillId ||
+        !("packageVersion" in value) ||
+        typeof value.packageVersion !== "string" ||
+        !("fingerprint" in value) ||
+        typeof value.fingerprint !== "string" ||
+        !/^[a-f0-9]{64}$/.test(value.fingerprint)
+    ) {
+        return null;
+    }
+
+    return {
+        schemaVersion: 1,
+        managedBy: value.managedBy,
+        skillId: value.skillId,
+        packageVersion: value.packageVersion,
+        fingerprint: value.fingerprint,
+    };
 }

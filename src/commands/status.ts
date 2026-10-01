@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { getAgentAdapter } from "../adapters/index.js";
 import { getSkillFingerprint } from "../installation/fingerprint.js";
 import { isManagedSkill } from "../installation/install-skill.js";
+import { readInstallationMetadata } from "../installation/metadata.js";
 import {
     getAvailableSkills,
     getSkillFileUrl,
@@ -62,6 +63,16 @@ export async function showSkillsStatus(
             continue;
         }
 
+        const metadata = await readInstallationMetadata(
+            destination,
+            skill.id,
+        );
+
+        if (!metadata) {
+            console.log(`${skill.id}: installation baseline unavailable`);
+            continue;
+        }
+
         const source = fileURLToPath(
             new URL(".", getSkillFileUrl(skill.id)),
         );
@@ -70,10 +81,23 @@ export async function showSkillsStatus(
         const installedFingerprint =
             await getSkillFingerprint(destination);
 
-        const status =
-            sourceFingerprint === installedFingerprint
-                ? "up to date"
-                : "different";
+        const locallyModified =
+            installedFingerprint !== metadata.fingerprint;
+
+        const updateAvailable =
+            sourceFingerprint !== metadata.fingerprint;
+
+        let status: string;
+
+        if (locallyModified && updateAvailable) {
+            status = "locally modified; update available";
+        } else if (locallyModified) {
+            status = "locally modified";
+        } else if (updateAvailable) {
+            status = "update available";
+        } else {
+            status = "up to date";
+        }
 
         console.log(`${skill.id}: ${status}`);
     }
