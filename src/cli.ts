@@ -7,6 +7,7 @@ import { showSkillsPath } from "./commands/path.js";
 import { installSkills } from "./commands/install.js";
 import { showSkillsStatus } from "./commands/status.js";
 import { updateSkills } from "./commands/update.js";
+import { diagnoseInstallation } from "./commands/doctor.js";
 import { packageVersion } from "./package-info.js";
 
 const packageJson: unknown = JSON.parse(
@@ -62,6 +63,12 @@ program
     .description("Update installed skills while protecting local changes.")
     .requiredOption("--agent <id>", "Target agent.")
     .action(updateSkills);
+
+program
+    .command("doctor")
+    .description("Inspect installation locks and update workspaces.")
+    .requiredOption("--agent <id>", "Target agent.")
+    .action(diagnoseInstallation);
 
 program.action(() => {
     program.help();
