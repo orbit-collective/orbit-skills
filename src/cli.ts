@@ -6,6 +6,7 @@ import { listSkills } from "./commands/list.js";
 import { showSkillsPath } from "./commands/path.js";
 import { installSkills } from "./commands/install.js";
 import { showSkillsStatus } from "./commands/status.js";
+import { packageVersion } from "./package-info.js";
 
 const packageJson: unknown = JSON.parse(
     readFileSync(
@@ -28,7 +29,7 @@ const program = new Command();
 program
     .name("orbit-skills")
     .description("Manage shared AI agent skills.")
-    .version(packageJson.version)
+    .version(packageVersion)
     .showHelpAfterError()
     .showSuggestionAfterError();
 
