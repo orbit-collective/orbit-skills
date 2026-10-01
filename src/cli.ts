@@ -38,4 +38,12 @@ program.action(() => {
     program.help();
 });
 
-program.parse();
+try {
+    await program.parseAsync();
+} catch (error) {
+    const message =
+        error instanceof Error ? error.message : "Unexpected error.";
+
+    console.error(`Error: ${message}`);
+    process.exitCode = 1;
+}
