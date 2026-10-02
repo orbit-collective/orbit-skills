@@ -36,14 +36,21 @@ export async function getSkillFingerprint(
             }
 
             const absolutePath = join(currentDirectory, entry.name);
+            const stat = await lstat(absolutePath);
 
             const relativePath = relativeDirectory
                 ? `${relativeDirectory}/${entry.name}`
                 : entry.name;
 
-            if (entry.isDirectory()) {
+            if (stat.isSymbolicLink()) {
+                throw new Error(
+                    `Unsupported symbolic link: "${absolutePath}".`,
+                );
+            }
+
+            if (stat.isDirectory()) {
                 await walk(absolutePath, relativePath);
-            } else if (entry.isFile()) {
+            } else if (stat.isFile()) {
                 const content = await readFile(absolutePath);
 
                 files.push({
