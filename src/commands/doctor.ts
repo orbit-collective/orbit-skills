@@ -1,139 +1,41 @@
-import { lstat, readdir } from "node:fs/promises";
-import { dirname, join } from "node:path";
-import { readUpdateTransaction } from "../installation/transaction.js";
 import { getAgentAdapter } from "../adapters/index.js";
-import {
-    clearAbandonedInstallationLock,
-    readInstallationLock,
-} from "../installation/lock.js";
+import { clearAbandonedInstallationLock } from "../installation/lock.js";
+import { inspectDoctor, type DoctorReport } from "../operations/doctor.js";
+import { jsonDocument, writeJsonDocument } from "../output/json.js";
+import { TerminalPresenter } from "../presentation/terminal.js";
 
-interface DoctorOptions {
-    agent: string;
-    clearLock?: string;
-}
+interface DoctorOptions { agent: string; clearLock?: string; json?: boolean }
 
-async function exists(path: string): Promise<boolean> {
-    try {
-        await lstat(path);
-        return true;
-    } catch (error) {
-        if (
-            error instanceof Error &&
-            "code" in error &&
-            error.code === "ENOENT"
-        ) {
-            return false;
-        }
-
-        throw error;
-    }
-}
-
-export async function diagnoseInstallation(
-    options: DoctorOptions,
-): Promise<void> {
+export async function diagnoseInstallation(options: DoctorOptions): Promise<DoctorReport> {
     const adapter = getAgentAdapter(options.agent);
-    const skillsDirectory = adapter.getSkillsDirectory();
-    const parentDirectory = dirname(skillsDirectory);
-
-    const lockDirectory = join(
-        parentDirectory,
-        ".orbit-skills.lock",
-    );
-
-    console.log(`Agent: ${adapter.name}`);
-    console.log(`Skills directory: ${skillsDirectory}\n`);
-
-    if (options.clearLock) {
-        await clearAbandonedInstallationLock(adapter, options.clearLock);
-        console.log(`Cleared abandoned lock: ${options.clearLock}\n`);
+    if (options.clearLock) await clearAbandonedInstallationLock(adapter, options.clearLock);
+    const report = await inspectDoctor(adapter);
+    if (options.json) {
+        writeJsonDocument(jsonDocument("doctor", report));
+        return report;
     }
-
-    if (!(await exists(parentDirectory))) {
-        console.log("Installation directory has not been created yet.");
-        return;
+    const presenter = new TerminalPresenter();
+    presenter.header(`Diagnostics · ${report.agent.name}`);
+    presenter.path(report.skillsDirectory, "Skills directory");
+    if (options.clearLock) presenter.success(`Cleared abandoned lock ${options.clearLock}.`);
+    presenter.paragraph(`Lock: ${report.lock.status}`);
+    if (report.lock.owner) {
+        presenter.paragraph(`Lock ID: ${report.lock.owner.lockId}`, "  ");
+        presenter.paragraph(`PID: ${report.lock.owner.pid}`, "  ");
+        presenter.paragraph(`Host: ${report.lock.owner.hostname}`, "  ");
+        presenter.paragraph(`Started: ${report.lock.owner.startedAt}`, "  ");
+        presenter.hint("Use --clear-lock with this exact ID only after the owner is proven inactive.");
     }
-
-    if (await exists(lockDirectory)) {
-        console.log(`Lock found: ${lockDirectory}`);
-        try {
-            const owner = await readInstallationLock(adapter);
-            if (!owner) throw new Error("Lock disappeared during inspection.");
-            console.log(`  Lock ID: ${owner.lockId}`);
-            console.log(`  PID: ${owner.pid}`);
-            console.log(`  Host: ${owner.hostname}`);
-            console.log(`  Started at: ${owner.startedAt}`);
-            console.log("  Use --clear-lock with this exact ID only after the owner is proven inactive.\n");
-        } catch (error) {
-            const message = error instanceof Error ? error.message : "Unexpected error.";
-            console.log(`  Lock cannot be recovered automatically: ${message}\n`);
+    if (report.lock.detail) presenter.warning(report.lock.detail);
+    presenter.paragraph(`Update workspaces: ${report.workspaces.length}`);
+    for (const workspace of report.workspaces) {
+        presenter.path(workspace.path, "Workspace");
+        presenter.paragraph(`Journal: ${workspace.journalStatus}`, "  ");
+        if (workspace.transaction) {
+            presenter.paragraph(`Skill: ${workspace.transaction.skillId}`, "  ");
+            presenter.paragraph(`Phase: ${workspace.transaction.phase}`, "  ");
         }
-    } else {
-        console.log("No installation lock found.\n");
+        if (workspace.detail) presenter.warning(workspace.detail);
     }
-
-    const entries = await readdir(parentDirectory, {
-        withFileTypes: true,
-    });
-
-    const workspaces = entries
-        .filter(
-            (entry) =>
-                entry.isDirectory() &&
-                entry.name.startsWith(".orbit-skills-update-"),
-        )
-        .sort((a, b) =>
-            a.name < b.name ? -1 : a.name > b.name ? 1 : 0,
-        );
-
-    if (workspaces.length === 0) {
-        console.log("No update workspaces found.");
-        return;
-    }
-
-    console.log(`Update workspaces: ${workspaces.length}\n`);
-
-    for (const entry of workspaces) {
-        const workspace = join(parentDirectory, entry.name);
-
-        const hasStaged = await exists(join(workspace, "staged"));
-        const hasBackup = await exists(join(workspace, "backup"));
-
-        console.log(workspace);
-        console.log(`  Staged directory: ${hasStaged ? "present" : "absent"}`);
-        console.log(`  Backup directory: ${hasBackup ? "present" : "absent"}`);
-        console.log();
-
-        try {
-            const transaction = await readUpdateTransaction(workspace);
-
-            if (transaction === null) {
-                console.log("  Transaction: unavailable (no journal)");
-            } else {
-                console.log(`  Skill: ${transaction.skillId}`);
-                console.log(`  Agent: ${transaction.agentId}`);
-                console.log(`  Phase: ${transaction.phase}`);
-                console.log(`  Updated at: ${transaction.updatedAt}`);
-
-                if (transaction.agentId !== adapter.id) {
-                    console.log("  This transaction belongs to another agent.");
-                }
-
-                if (
-                    transaction.phase !== "completed" &&
-                    transaction.phase !== "cancelled" &&
-                    transaction.phase !== "restored"
-                ) {
-                    console.log(
-                        "  Requires inspection: completion was not recorded.",
-                    );
-                }
-            }
-        } catch (error) {
-            const message =
-                error instanceof Error ? error.message : "Unexpected error.";
-
-            console.log(`  Transaction: unreadable or invalid (${message})`);
-        }
-    }
+    return report;
 }

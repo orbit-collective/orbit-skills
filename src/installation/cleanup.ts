@@ -123,5 +123,6 @@ export async function cleanupUpdateBackups(
     adapter: AgentAdapter,
     options: CleanupOptions,
 ): Promise<CleanupResult> {
+    if (options.dryRun) return cleanupUnlocked(adapter, options);
     return withInstallationLock(adapter, () => cleanupUnlocked(adapter, options));
 }
