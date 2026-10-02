@@ -2,17 +2,19 @@ import { getAgentAdapter } from "../adapters/index.js";
 import { manageSkills, type SkillBatchResult } from "../operations/manage-skills.js";
 import { applySkillCommandExitCode, printSkillBatchResult } from "./skill-output.js";
 
-interface UpdateOptions {
+interface UninstallOptions {
     agent: string;
     dryRun?: boolean;
+    force?: boolean;
 }
 
-export async function updateSkills(
+export async function uninstallSkills(
     skillIds: readonly string[],
-    options: UpdateOptions,
+    options: UninstallOptions,
 ): Promise<SkillBatchResult> {
-    const result = await manageSkills("update", skillIds, getAgentAdapter(options.agent), {
+    const result = await manageSkills("uninstall", skillIds, getAgentAdapter(options.agent), {
         dryRun: options.dryRun,
+        force: options.force,
     });
     printSkillBatchResult(result);
     applySkillCommandExitCode(result.summary);

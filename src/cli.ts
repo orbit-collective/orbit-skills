@@ -10,6 +10,8 @@ import { updateSkills } from "./commands/update.js";
 import { diagnoseInstallation } from "./commands/doctor.js";
 import { recoverInterruptedUpdate } from "./commands/recover.js";
 import { cleanupBackups } from "./commands/cleanup.js";
+import { uninstallSkills } from "./commands/uninstall.js";
+import { showSkillInfo } from "./commands/info.js";
 import { packageVersion } from "./package-info.js";
 
 const packageJson: unknown = JSON.parse(
@@ -50,9 +52,20 @@ program
 
 program
     .command("install")
-    .description("Install available skills for an agent.")
+    .description(
+        "Install selected skills, or every available skill when none are named.",
+    )
+    .argument("[skills...]", "Official skill IDs.")
     .requiredOption("--agent <id>", "Target agent.")
-    .action(installSkills);
+    .option("--dry-run", "Show the current plan without changing files.")
+    .action(
+        async (
+            skills: string[],
+            options: { agent: string; dryRun?: boolean },
+        ) => {
+            await installSkills(skills, options);
+        },
+    );
 
 program
     .command("status")
@@ -62,9 +75,48 @@ program
 
 program
     .command("update")
-    .description("Update installed skills while protecting local changes.")
+    .description(
+        "Update selected skills, or every available skill when none are named.",
+    )
+    .argument("[skills...]", "Official skill IDs.")
     .requiredOption("--agent <id>", "Target agent.")
-    .action(updateSkills);
+    .option("--dry-run", "Show the current plan without changing files.")
+    .action(
+        async (
+            skills: string[],
+            options: { agent: string; dryRun?: boolean },
+        ) => {
+            await updateSkills(skills, options);
+        },
+    );
+
+program
+    .command("uninstall")
+    .description("Remove explicitly selected, managed skills.")
+    .argument("<skills...>", "Official skill IDs to remove.")
+    .requiredOption("--agent <id>", "Target agent.")
+    .option("--dry-run", "Show the current plan without changing files.")
+    .option("--force", "Remove local changes in only the selected managed skills.")
+    .action(
+        async (
+            skills: string[],
+            options: {
+                agent: string;
+                dryRun?: boolean;
+                force?: boolean;
+            },
+        ) => {
+            await uninstallSkills(skills, options);
+        },
+    );
+
+program
+    .command("info")
+    .description("Show catalog information for one official skill.")
+    .argument("<skill>", "Official skill ID.")
+    .action(async (skill: string) => {
+        await showSkillInfo(skill);
+    });
 
 program
     .command("doctor")
