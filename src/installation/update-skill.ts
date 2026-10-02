@@ -9,6 +9,10 @@ import {
 import { getSkillFingerprint } from "./fingerprint.js";
 import { isManagedSkill } from "./install-skill.js";
 import {
+    createUpdateTransaction,
+    writeUpdateTransaction,
+} from "./transaction.js";
+import {
     readInstallationMetadata,
     writeInstallationMetadata,
 } from "./metadata.js";
@@ -69,6 +73,19 @@ export async function updateSkill(
     const staged = join(workspace, "staged");
     const backup = join(workspace, "backup");
 
+    const transaction = createUpdateTransaction({
+        agentId: adapter.id,
+        skillId: skill.id,
+        originalFingerprint: installedFingerprint,
+        targetFingerprint: sourceFingerprint,
+    });
+
+    await writeUpdateTransaction(
+        workspace,
+        transaction,
+        "preparing",
+    );
+
     await cp(source, staged, {
         recursive: true,
         force: false,
@@ -99,6 +116,18 @@ export async function updateSkill(
         stagedFingerprint,
     );
 
+    await writeInstallationMetadata(
+        staged,
+        skill.id,
+        stagedFingerprint,
+    );
+
+    await writeUpdateTransaction(
+        workspace,
+        transaction,
+        "prepared",
+    );
+
     // Sprawdzamy ponownie tuż przed podmianą.
     const currentFingerprint =
         await getSkillFingerprint(destination);
@@ -108,6 +137,12 @@ export async function updateSkill(
             `Installed files changed during update of "${skill.id}". Update cancelled.`,
         );
     }
+
+    await writeUpdateTransaction(
+        workspace,
+        transaction,
+        "committing",
+    );
 
     await rename(destination, backup);
 
@@ -145,6 +180,12 @@ export async function updateSkill(
             { cause: error },
         );
     }
+
+    await writeUpdateTransaction(
+        workspace,
+        transaction,
+        "completed",
+    );
 
     return {
         status: "updated",
