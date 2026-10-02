@@ -2,17 +2,17 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import type { AgentAdapter } from "./types.js";
 
-export function createCodexAdapter(
+export function createClaudeCodeAdapter(
     homeDirectory = homedir(),
 ): AgentAdapter {
     return {
-        id: "codex",
-        name: "Codex",
+        id: "claude-code",
+        name: "Claude Code",
 
         getSkillsDirectory() {
-            return join(homeDirectory, ".agents", "skills");
+            return join(homeDirectory, ".claude", "skills");
         },
     };
 }
 
-export const codexAdapter = createCodexAdapter();
+export const claudeCodeAdapter = createClaudeCodeAdapter();

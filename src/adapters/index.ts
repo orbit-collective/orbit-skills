@@ -1,8 +1,10 @@
 import { codexAdapter } from "./codex.js";
+import { claudeCodeAdapter } from "./claude-code.js";
 import type { AgentAdapter } from "./types.js";
 
 const adapters: readonly AgentAdapter[] = [
     codexAdapter,
+    claudeCodeAdapter,
 ];
 
 export function getAgentAdapter(agentId: string): AgentAdapter {
