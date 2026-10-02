@@ -1,5 +1,6 @@
 import { lstat, readdir, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { readUpdateTransaction } from "../installation/transaction.js";
 import { getAgentAdapter } from "../adapters/index.js";
 
 interface DoctorOptions {
@@ -110,5 +111,33 @@ export async function diagnoseInstallation(
         console.log(`  Staged directory: ${hasStaged ? "present" : "absent"}`);
         console.log(`  Backup directory: ${hasBackup ? "present" : "absent"}`);
         console.log();
+
+        try {
+            const transaction = await readUpdateTransaction(workspace);
+
+            if (transaction === null) {
+                console.log("  Transaction: unavailable (no journal)");
+            } else {
+                console.log(`  Skill: ${transaction.skillId}`);
+                console.log(`  Agent: ${transaction.agentId}`);
+                console.log(`  Phase: ${transaction.phase}`);
+                console.log(`  Updated at: ${transaction.updatedAt}`);
+
+                if (transaction.agentId !== adapter.id) {
+                    console.log("  This transaction belongs to another agent.");
+                }
+
+                if (transaction.phase !== "completed") {
+                    console.log(
+                        "  Requires inspection: completion was not recorded.",
+                    );
+                }
+            }
+        } catch (error) {
+            const message =
+                error instanceof Error ? error.message : "Unexpected error.";
+
+            console.log(`  Transaction: unreadable or invalid (${message})`);
+        }
     }
 }
