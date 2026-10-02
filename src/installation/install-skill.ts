@@ -12,10 +12,14 @@ import {
     type SkillDefinition,
 } from "../skills/catalog.js";
 import type { AgentAdapter } from "../adapters/types.js";
+import { packageName } from "../package-info.js";
 import { getSkillFingerprint } from "./fingerprint.js";
-import { writeInstallationMetadata } from "./metadata.js";
+import { ensureRegularDirectory } from "./directory.js";
+import {
+    readInstallationMetadata,
+    writeInstallationMetadata,
+} from "./metadata.js";
 
-const OWNER = "@orbit-collective/skills";
 const MARKER_FILE = ".orbit-skill.json";
 
 type InstallResult = "installed" | "skipped";
@@ -34,25 +38,18 @@ export async function isManagedSkill(
 ): Promise<boolean> {
     try {
         const markerPath = join(directory, MARKER_FILE);
-        const markerStat = await lstat(markerPath);
-
-        if (!markerStat.isFile()) {
-            return false;
-        }
-
-        const marker: unknown = JSON.parse(
-            await readFile(markerPath, "utf8"),
-        );
-
+        const stat = await lstat(markerPath);
+        if (!stat.isFile() || stat.isSymbolicLink()) return false;
+        const value: unknown = JSON.parse(await readFile(markerPath, "utf8"));
         return (
-            typeof marker === "object" &&
-            marker !== null &&
-            "schemaVersion" in marker &&
-            marker.schemaVersion === 1 &&
-            "managedBy" in marker &&
-            marker.managedBy === OWNER &&
-            "skillId" in marker &&
-            marker.skillId === skillId
+            typeof value === "object" &&
+            value !== null &&
+            "schemaVersion" in value &&
+            value.schemaVersion === 1 &&
+            "managedBy" in value &&
+            value.managedBy === packageName &&
+            "skillId" in value &&
+            value.skillId === skillId
         );
     } catch (error) {
         if (hasErrorCode(error, "ENOENT") || error instanceof SyntaxError) {
@@ -74,7 +71,7 @@ export async function installSkill(
     const skillsDirectory = adapter.getSkillsDirectory();
     const destination = join(skillsDirectory, skill.id);
 
-    await mkdir(skillsDirectory, { recursive: true });
+    await ensureRegularDirectory(skillsDirectory, true);
 
     try {
         await mkdir(destination);
@@ -94,9 +91,25 @@ export async function installSkill(
             );
         }
 
+        const metadata = await readInstallationMetadata(destination, skill.id);
+
+        if (!metadata) {
+            throw new Error(
+                `Installation baseline unavailable for "${skill.id}". ` +
+                "Existing files were left unchanged.",
+            );
+        }
+
         const sourceFingerprint = await getSkillFingerprint(source);
         const installedFingerprint =
             await getSkillFingerprint(destination);
+
+        if (installedFingerprint !== metadata.fingerprint) {
+            throw new Error(
+                `Skill "${skill.id}" has local changes. ` +
+                "Installation files and metadata were left unchanged.",
+            );
+        }
 
         if (sourceFingerprint !== installedFingerprint) {
             throw new Error(
@@ -105,12 +118,6 @@ export async function installSkill(
             );
         }
 
-        await writeInstallationMetadata(
-            destination,
-            skill.id,
-            installedFingerprint,
-        );
-
         return "skipped";
     }
 
@@ -118,6 +125,14 @@ export async function installSkill(
         const entries = await readdir(source);
 
         for (const entry of entries) {
+            if (
+                entry === MARKER_FILE ||
+                /^\.orbit-skill-.*\.tmp$/.test(entry)
+            ) {
+                throw new Error(
+                    `Skill source contains reserved file "${entry}".`,
+                );
+            }
             await cp(
                 join(source, entry),
                 join(destination, entry),
