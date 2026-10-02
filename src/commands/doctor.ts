@@ -1,10 +1,15 @@
-import { lstat, readdir, readFile } from "node:fs/promises";
+import { lstat, readdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { readUpdateTransaction } from "../installation/transaction.js";
 import { getAgentAdapter } from "../adapters/index.js";
+import {
+    clearAbandonedInstallationLock,
+    readInstallationLock,
+} from "../installation/lock.js";
 
 interface DoctorOptions {
     agent: string;
+    clearLock?: string;
 }
 
 async function exists(path: string): Promise<boolean> {
@@ -39,6 +44,11 @@ export async function diagnoseInstallation(
     console.log(`Agent: ${adapter.name}`);
     console.log(`Skills directory: ${skillsDirectory}\n`);
 
+    if (options.clearLock) {
+        await clearAbandonedInstallationLock(adapter, options.clearLock);
+        console.log(`Cleared abandoned lock: ${options.clearLock}\n`);
+    }
+
     if (!(await exists(parentDirectory))) {
         console.log("Installation directory has not been created yet.");
         return;
@@ -46,36 +56,18 @@ export async function diagnoseInstallation(
 
     if (await exists(lockDirectory)) {
         console.log(`Lock found: ${lockDirectory}`);
-
-        const ownerPath = join(lockDirectory, "owner.json");
-
-        if (await exists(ownerPath)) {
-            const owner: unknown = JSON.parse(
-                await readFile(ownerPath, "utf8"),
-            );
-
-            if (
-                typeof owner === "object" &&
-                owner !== null &&
-                "pid" in owner &&
-                typeof owner.pid === "number" &&
-                Number.isSafeInteger(owner.pid) &&
-                owner.pid > 0 &&
-                "startedAt" in owner &&
-                typeof owner.startedAt === "string"
-            ) {
-                console.log(`  PID: ${owner.pid}`);
-                console.log(`  Started at: ${owner.startedAt}`);
-            } else {
-                console.log("  Lock owner metadata is invalid.");
-            }
-        } else {
-            console.log("  Lock owner metadata is missing.");
+        try {
+            const owner = await readInstallationLock(adapter);
+            if (!owner) throw new Error("Lock disappeared during inspection.");
+            console.log(`  Lock ID: ${owner.lockId}`);
+            console.log(`  PID: ${owner.pid}`);
+            console.log(`  Host: ${owner.hostname}`);
+            console.log(`  Started at: ${owner.startedAt}`);
+            console.log("  Use --clear-lock with this exact ID only after the owner is proven inactive.\n");
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Unexpected error.";
+            console.log(`  Lock cannot be recovered automatically: ${message}\n`);
         }
-
-        console.log(
-            "  Check whether the operation is still running before recovery.\n",
-        );
     } else {
         console.log("No installation lock found.\n");
     }
@@ -127,7 +119,11 @@ export async function diagnoseInstallation(
                     console.log("  This transaction belongs to another agent.");
                 }
 
-                if (transaction.phase !== "completed") {
+                if (
+                    transaction.phase !== "completed" &&
+                    transaction.phase !== "cancelled" &&
+                    transaction.phase !== "restored"
+                ) {
                     console.log(
                         "  Requires inspection: completion was not recorded.",
                     );
