@@ -18,6 +18,13 @@ export interface InstallationLockOwner {
     agentId: string;
 }
 
+export class InstallationLockLostError extends Error {
+    constructor(message = "Installation lock ownership changed; stopping the operation.") {
+        super(message);
+        this.name = "InstallationLockLostError";
+    }
+}
+
 function lockDirectoryFor(adapter: AgentAdapter): string {
     return join(dirname(adapter.getSkillsDirectory()), ".orbit-skills.lock");
 }
@@ -209,7 +216,7 @@ export async function clearAbandonedInstallationLock(
 
 export async function withInstallationLock<T>(
     adapter: AgentAdapter,
-    operation: () => Promise<T>,
+    operation: (assertOwnership: () => Promise<void>) => Promise<T>,
 ): Promise<T> {
     const parentDirectory = dirname(adapter.getSkillsDirectory());
     const lockDirectory = lockDirectoryFor(adapter);
@@ -252,15 +259,24 @@ export async function withInstallationLock<T>(
         throw error;
     }
 
-    try {
-        return await operation();
-    } finally {
-        const current = await readInstallationLock(adapter);
-        if (!current || !sameOwner(current, owner)) {
-            throw new Error(
-                "Installation lock ownership changed; refusing to remove another owner's lock.",
+    const assertOwnership = async (): Promise<void> => {
+        let current: InstallationLockOwner | null;
+        try {
+            current = await readInstallationLock(adapter);
+        } catch (error) {
+            throw new InstallationLockLostError(
+                `Cannot verify installation lock ownership: ${error instanceof Error ? error.message : "unknown error"}`,
             );
         }
+        if (!current || !sameOwner(current, owner)) {
+            throw new InstallationLockLostError();
+        }
+    };
+
+    try {
+        return await operation(assertOwnership);
+    } finally {
+        await assertOwnership();
         await rm(lockDirectory, { recursive: true, force: false });
     }
 }
