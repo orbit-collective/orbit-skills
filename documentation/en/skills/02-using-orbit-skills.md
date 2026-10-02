@@ -4,7 +4,7 @@ This guide covers the two supported interfaces over the same installation and re
 
 ## Step 1 — Build and start locally
 
-Use Node.js 20.17.0 or newer:
+Use Node.js 22.13+ within the Node 22 line, Node.js 24, or Node.js 26:
 
 ```bash
 npm install
@@ -12,7 +12,12 @@ npm run build
 node dist/cli.js
 ```
 
-With stdin and stdout connected to a TTY, no arguments open the menu. Redirected execution prints help and exits. The current package is private, so distinguish this local invocation from a future global npm installation.
+With stdin and stdout connected to a TTY, no arguments open the menu. Redirected execution prints help and exits. Before the first publication, use the local command above. After publication, install or execute an explicit registry version:
+
+```bash
+npm install --global @orbit-collective/skills@0.1.0
+npm exec --yes --package=@orbit-collective/skills@0.1.0 -- orbit-skills list
+```
 
 ## Step 2 — Navigate and search
 
@@ -52,5 +57,7 @@ Tests for menu state use an injected prompt adapter. Built-CLI tests use a tempo
 npm run typecheck
 npm run build
 npm test
-node test/cli-integration.test.js
+npm run validate:catalog
+npm run check:package
+npm run test:package
 ```

@@ -4,7 +4,7 @@ Ten przewodnik opisuje dwa obsługiwane interfejsy korzystające z tych samych u
 
 ## Krok 1 — Zbuduj i uruchom lokalnie
 
-Użyj Node.js 20.17.0 lub nowszego:
+Użyj Node.js 22.13+ w linii Node 22, Node.js 24 albo Node.js 26:
 
 ```bash
 npm install
@@ -12,7 +12,12 @@ npm run build
 node dist/cli.js
 ```
 
-Brak argumentów otwiera menu, gdy stdin i stdout są połączone z TTY. Przy przekierowaniu program wyświetla pomoc i kończy działanie. Obecna paczka jest prywatna, dlatego odróżniaj to lokalne uruchomienie od przyszłej globalnej instalacji npm.
+Brak argumentów otwiera menu, gdy stdin i stdout są połączone z TTY. Przy przekierowaniu program wyświetla pomoc i kończy działanie. Przed pierwszą publikacją używaj powyższego polecenia lokalnego. Po publikacji zainstaluj albo uruchom jawną wersję z rejestru:
+
+```bash
+npm install --global @orbit-collective/skills@0.1.0
+npm exec --yes --package=@orbit-collective/skills@0.1.0 -- orbit-skills list
+```
 
 ## Krok 2 — Nawiguj i wyszukuj
 
@@ -52,5 +57,7 @@ Testy stanu menu używają wstrzykiwanego adaptera promptów. Testy zbudowanego 
 npm run typecheck
 npm run build
 npm test
-node test/cli-integration.test.js
+npm run validate:catalog
+npm run check:package
+npm run test:package
 ```

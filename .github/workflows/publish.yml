@@ -1,0 +1,55 @@
+name: Publish npm package
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag matching package.json, for example v0.1.0
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: npm
+
+    steps:
+      - name: Check out the requested tag
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.tag }}
+
+      - name: Set up Node.js for trusted publishing
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Verify tag and package version
+        run: node scripts/release/verify-release-tag.mjs "${{ inputs.tag }}"
+
+      - name: Verify release inputs
+        run: npm run release:verify
+
+      - name: Build the exact release tarball
+        id: artifact
+        run: node scripts/release/pack-artifact.mjs "${{ runner.temp }}" >> "$GITHUB_OUTPUT"
+
+      - name: Test the exact release tarball
+        run: npm run test:artifact -- "${{ steps.artifact.outputs.path }}"
+
+      - name: Publish the verified tarball
+        run: npm publish "${{ steps.artifact.outputs.path }}" --access public
+
