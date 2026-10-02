@@ -1,5 +1,6 @@
 import { getAgentAdapter } from "../adapters/index.js";
 import { cleanupUpdateBackups } from "../installation/cleanup.js";
+import { TerminalPresenter } from "../presentation/terminal.js";
 
 interface CleanupOptions {
     agent: string;
@@ -14,18 +15,19 @@ export async function cleanupBackups(options: CleanupOptions): Promise<void> {
         dryRun: options.dryRun ?? false,
         keep,
     });
+    const presenter = new TerminalPresenter();
     if (result.removable.length === 0) {
-        console.log("No verified completed backups are eligible for cleanup.");
+        presenter.info("No verified completed backups are eligible for cleanup.");
         return;
     }
     if (options.dryRun) {
         for (const item of result.removable) {
-            console.log(`Would remove: ${item.workspace}`);
+            presenter.path(item.workspace, "Would remove");
         }
     } else {
         for (const workspace of result.removed) {
-            console.log(`Removed: ${workspace}`);
+            presenter.path(workspace, "Removed");
         }
     }
-    if (options.dryRun) console.log("Dry run: no files were changed.");
+    if (options.dryRun) presenter.info("Dry run: no files were changed.");
 }

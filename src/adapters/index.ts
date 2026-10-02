@@ -7,6 +7,10 @@ const adapters: readonly AgentAdapter[] = [
     claudeCodeAdapter,
 ];
 
+export function getAgentAdapters(): readonly AgentAdapter[] {
+    return adapters;
+}
+
 export function getAgentAdapter(agentId: string): AgentAdapter {
     const adapter = adapters.find(
         (candidate) => candidate.id === agentId,

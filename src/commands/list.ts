@@ -1,19 +1,25 @@
+import { jsonDocument, writeJsonDocument } from "../output/json.js";
+import { packageVersion } from "../package-info.js";
+import { TerminalPresenter } from "../presentation/terminal.js";
 import { getAvailableSkills } from "../skills/catalog.js";
 
-export async function listSkills(): Promise<void> {
-    const skills = await getAvailableSkills();
+interface ListOptions { json?: boolean }
 
-    if (skills.length === 0) {
-        console.log("No skills available yet.");
+export async function listSkills(options: ListOptions = {}): Promise<void> {
+    const skills = await getAvailableSkills();
+    if (options.json) {
+        writeJsonDocument(jsonDocument("list", { packageVersion, skills }));
         return;
     }
-
-    console.log("Available skills:\n");
-
-    for (const skill of skills) {
-        console.log(`${skill.id} — ${skill.name}`);
-        console.log(`  ${skill.description}\n`);
+    const presenter = new TerminalPresenter();
+    presenter.header("Available skills");
+    if (skills.length === 0) {
+        presenter.info("No skills are available yet.");
+        return;
     }
-
-    console.log(`${skills.length} skill(s) available.`);
+    for (const skill of skills) {
+        presenter.paragraph(`${skill.name} (${skill.id})`);
+        presenter.paragraph(skill.description, "  ");
+    }
+    presenter.paragraph(`${skills.length} skill(s) available.`);
 }
