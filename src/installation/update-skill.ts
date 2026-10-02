@@ -1,5 +1,5 @@
 import { cp, lstat, mkdtemp, rename } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { AgentAdapter } from "../adapters/types.js";
 import {
@@ -7,6 +7,8 @@ import {
     type SkillDefinition,
 } from "../skills/catalog.js";
 import { getSkillFingerprint } from "./fingerprint.js";
+import { ensureRegularDirectory } from "./directory.js";
+import { inspectInstallation } from "./inspect.js";
 import { isManagedSkill } from "./install-skill.js";
 import {
     createUpdateTransaction,
@@ -32,6 +34,8 @@ export async function updateSkill(
 
     const skillsDirectory = adapter.getSkillsDirectory();
     const destination = join(skillsDirectory, skill.id);
+
+    await ensureRegularDirectory(skillsDirectory, false);
 
     const destinationStat = await lstat(destination);
 
@@ -97,6 +101,12 @@ export async function updateSkill(
             if (stat.isSymbolicLink()) {
                 throw new Error(`Skill contains a symbolic link: "${path}".`);
             }
+            if (
+                basename(path) === ".orbit-skill.json" ||
+                /^\.orbit-skill-.*\.tmp$/.test(basename(path))
+            ) {
+                throw new Error(`Skill contains reserved file: "${path}".`);
+            }
 
             return true;
         },
@@ -116,12 +126,6 @@ export async function updateSkill(
         stagedFingerprint,
     );
 
-    await writeInstallationMetadata(
-        staged,
-        skill.id,
-        stagedFingerprint,
-    );
-
     await writeUpdateTransaction(
         workspace,
         transaction,
@@ -129,10 +133,13 @@ export async function updateSkill(
     );
 
     // Sprawdzamy ponownie tuż przed podmianą.
-    const currentFingerprint =
-        await getSkillFingerprint(destination);
+    const currentState = await inspectInstallation(
+        destination,
+        skill.id,
+        installedFingerprint,
+    );
 
-    if (currentFingerprint !== installedFingerprint) {
+    if (currentState.kind !== "valid") {
         throw new Error(
             `Installed files changed during update of "${skill.id}". Update cancelled.`,
         );
@@ -181,11 +188,19 @@ export async function updateSkill(
         );
     }
 
-    await writeUpdateTransaction(
-        workspace,
-        transaction,
-        "completed",
-    );
+    try {
+        await writeUpdateTransaction(
+            workspace,
+            transaction,
+            "completed",
+        );
+    } catch (error) {
+        throw new Error(
+            `The new version of "${skill.id}" is installed, but completion ` +
+            `could not be recorded. Recovery files: "${workspace}". Run recover.`,
+            { cause: error },
+        );
+    }
 
     return {
         status: "updated",
