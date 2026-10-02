@@ -1,5 +1,7 @@
+export type AgentId = "codex" | "claude-code";
+
 export interface AgentAdapter {
-    readonly id: string;
+    readonly id: AgentId;
     readonly name: string;
 
     getSkillsDirectory(): string;
