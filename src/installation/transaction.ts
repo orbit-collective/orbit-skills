@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { readFile, rename, rm, writeFile } from "node:fs/promises";
+import { lstat, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import { packageName, packageVersion } from "../package-info.js";
@@ -8,7 +8,9 @@ export type TransactionPhase =
     | "preparing"
     | "prepared"
     | "committing"
-    | "completed";
+    | "completed"
+    | "cancelled"
+    | "restored";
 
 export interface UpdateTransaction {
     schemaVersion: 1;
@@ -113,7 +115,9 @@ function isTransactionPhase(value: unknown): value is TransactionPhase {
         value === "preparing" ||
         value === "prepared" ||
         value === "committing" ||
-        value === "completed"
+        value === "completed" ||
+        value === "cancelled" ||
+        value === "restored"
     );
 }
 
@@ -123,6 +127,10 @@ export async function readUpdateTransaction(
     let content: string;
 
     try {
+        const stat = await lstat(join(workspace, "transaction.json"));
+        if (!stat.isFile() || stat.isSymbolicLink()) {
+            throw new Error("Update transaction journal is not a regular file or is a symbolic link.");
+        }
         content = await readFile(
             join(workspace, "transaction.json"),
             "utf8",
@@ -153,7 +161,8 @@ export async function readUpdateTransaction(
         !isFingerprint(value.targetFingerprint) ||
         !isTimestamp(value.createdAt) ||
         !isTimestamp(value.updatedAt) ||
-        !isTransactionPhase(value.phase)
+        !isTransactionPhase(value.phase) ||
+        Date.parse(value.updatedAt) < Date.parse(value.createdAt)
     ) {
         throw new Error("Invalid update transaction.");
     }
