@@ -5,3 +5,4 @@ Orbit Skills dostarcza celowo mały katalog sprawdzonych skillów. Każda pozycj
 ## Przewodniki
 
 1. [Dodawanie oficjalnego skilla](01-adding-an-official-skill.md)
+2. [Korzystanie z CLI i menu interaktywnego](02-using-orbit-skills.md)

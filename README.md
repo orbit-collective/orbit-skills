@@ -1,0 +1,149 @@
+# Orbit Skills
+
+`@orbit-collective/skills` ships and safely manages the official Orbit skills for supported AI agents. The `orbit-skills` CLI can be used interactively in a terminal or directly from scripts.
+
+## Requirements
+
+- Node.js 20.17.0 or newer.
+- A terminal with stdin and stdout attached to a TTY for the interactive menu.
+- Codex or Claude Code for installing the currently shipped skills.
+
+The terminal UI uses blue as its single accent because this repository does not define a brand color. Green means success or current, yellow means warning or local changes, red means error or conflict, and muted text means missing or informational. Every colored status also contains a text label. Set `NO_COLOR=1` to disable colors.
+
+## Local development
+
+Clone the repository, install dependencies, build, and run the built CLI:
+
+```bash
+npm install
+npm run build
+node dist/cli.js
+```
+
+During development, `npm start -- <arguments>` also runs `dist/cli.js`, so build after source changes.
+
+The package is currently private. A future published package could be installed globally with `npm install --global @orbit-collective/skills`, but that is not an installation path available from the current repository state.
+
+## Interactive menu
+
+Run without arguments in an interactive terminal:
+
+```bash
+orbit-skills
+```
+
+The menu provides install, update, uninstall, status, skill details, diagnostics, recovery, backup cleanup, and exit. On first use it explains that no managed skills are installed and points to installation, but never installs automatically.
+
+Common controls:
+
+- `↑` and `↓`: move through an active list;
+- `Space`: toggle an item only inside the checkbox list;
+- `Enter`: open or confirm the current choice;
+- `Ctrl+C`: cancel the menu safely;
+- `← Back`: return from a submenu.
+
+Skill search is a separate typing step. Enter a name or ID, press `Enter`, then open the visible checkbox list. Selections hidden by a filter remain selected. The selector also has explicit “Select all skills” and “Clear selection” actions and disables continuation when the selection is empty.
+
+Changing actions first show a dry-run plan. The CLI takes the shared installation lock only after confirmation and checks the state again under that lock. Uninstall and cleanup use explicit destructive confirmations. Forced uninstall is never the default.
+
+When either stdin or stdout is not a TTY, running without arguments prints help and exits instead of waiting for input. Direct commands never open prompts and never display the banner.
+
+## Commands
+
+| Command | Purpose |
+| --- | --- |
+| `orbit-skills list [--json]` | List every official skill available in this package. |
+| `orbit-skills info <skill> [--json]` | Show catalog details for one skill. |
+| `orbit-skills path --agent <id>` | Print the personal installation directory. |
+| `orbit-skills install [skills...] --agent <id> [--dry-run]` | Install selected skills; without IDs, use all available compatible skills. |
+| `orbit-skills status --agent <id> [--json]` | Inspect every available compatible skill. |
+| `orbit-skills update [skills...] --agent <id> [--dry-run]` | Update selected skills; without IDs, check all available compatible skills, not only installed ones. |
+| `orbit-skills uninstall <skills...> --agent <id> [--dry-run] [--force]` | Remove only explicitly selected managed skills. |
+| `orbit-skills doctor --agent <id> [--clear-lock <lock-id>] [--json]` | Inspect locks and update workspaces or attempt exact-ID abandoned-lock recovery. |
+| `orbit-skills recover --agent <id> --transaction <name>` | Recover one exact interrupted update transaction. |
+| `orbit-skills cleanup --agent <id> [--dry-run] [--keep <count>]` | Remove verified completed update backups, keeping three by default. |
+
+Supported agent IDs are `codex` and `claude-code`.
+
+Examples:
+
+```bash
+orbit-skills install document-feature --agent codex --dry-run
+orbit-skills install document-feature --agent claude-code
+orbit-skills update document-feature --agent codex
+orbit-skills uninstall document-feature --agent codex
+orbit-skills status --agent codex --json
+orbit-skills cleanup --agent codex --dry-run --keep 2
+```
+
+## Installation scope
+
+Only personal installations are supported:
+
+- Codex: `~/.agents/skills/<skill-id>`;
+- Claude Code: `~/.claude/skills/<skill-id>`.
+
+Project installations, profiles, pinned skill versions, external sources, and Orbit API integration are intentionally unsupported.
+
+## JSON output
+
+`list`, `info`, `status`, and `doctor` accept `--json`. Stdout contains exactly one JSON document and no banner, prompt, spinner, badge, or ANSI sequence. Errors use the same stream and return a nonzero exit code.
+
+Every document starts with:
+
+```json
+{
+  "schemaVersion": 1,
+  "command": "status"
+}
+```
+
+Successful documents add command-specific fields. Error documents add:
+
+```json
+{
+  "schemaVersion": 1,
+  "command": "info",
+  "error": {
+    "code": "COMMAND_FAILED",
+    "message": "Unknown skill ID: missing-skill."
+  }
+}
+```
+
+Schema version 1 command payloads are:
+
+- `list`: `packageVersion` and `skills[]`; each skill contains `id`, `name`, `description`, `usage`, `supportedAgents[]`, and `resources[]`.
+- `info`: one `skill` object with the catalog fields above plus `packageVersion`.
+- `status`: `agent`, `skillsDirectory`, and `skills[]`; each status contains `id`, `name`, `destination`, `status`, `localChanges`, `updateAvailable`, and optional `detail`.
+- `doctor`: `agent`, `skillsDirectory`, `parentExists`, `lock`, and `workspaces[]`. Lock status is `none`, `present`, or `invalid`; workspace journal status is `valid`, `missing`, or `invalid`.
+
+Status values are `not-installed`, `up-to-date`, `update-available`, `locally-modified`, `conflict`, and `unknown`. Consumers should reject unsupported future `schemaVersion` values instead of silently assuming version 1.
+
+`status` and `doctor` include local installation, lock, and update-workspace paths. `doctor` may include a validated lock ID, PID, hostname, and start time so an operator can evaluate exact-ID lock recovery. Machine IDs, boot IDs, process-start ticks, raw invalid journals, fingerprints, and file contents are not exported.
+
+## Safety and recovery
+
+Managed installations contain `.orbit-skill.json` with ownership and a content fingerprint. Install, update, uninstall, recovery, and destructive cleanup share the same cooperative lock. Local changes block update and uninstall by default. `--force` applies only to explicitly selected, otherwise valid managed installations.
+
+Updates stage a new copy and keep a journal plus a verified backup outside the skill directory. Use `doctor` to identify an interrupted transaction, then pass its exact workspace name to `recover`. Cleanup automatically removes only verified backups belonging to completed transactions; malformed, interrupted, journal-less, or unknown workspaces are preserved.
+
+The lock cannot protect against unrelated processes that ignore it, and dry-run is only a snapshot. The CLI rechecks after acquiring the lock, but it does not promise power-loss durability or protection from arbitrary concurrent filesystem changes.
+
+## Development
+
+Run all checks with:
+
+```bash
+npm run typecheck
+npm run build
+npm test
+```
+
+CLI integration tests use a temporary `HOME`; they never target real agent directories. Some restricted sandboxes cannot start subprocesses and mark those cases skipped. Run the integration test outside such a sandbox to execute the built CLI:
+
+```bash
+node test/cli-integration.test.js
+```
+
+See [Add an official skill](documentation/en/skills/01-adding-an-official-skill.md) for catalog rules and [Use the CLI and interactive menu](documentation/en/skills/02-using-orbit-skills.md) for the terminal flows.

@@ -5,3 +5,4 @@ Orbit Skills ships a deliberately small catalog of reviewed skills. Each catalog
 ## Guides
 
 1. [Add an official skill](01-adding-an-official-skill.md)
+2. [Use the CLI and interactive menu](02-using-orbit-skills.md)
