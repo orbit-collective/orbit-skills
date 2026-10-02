@@ -2,11 +2,27 @@
 
 `@orbit-collective/skills` ships and safely manages the official Orbit skills for supported AI agents. The `orbit-skills` CLI can be used interactively in a terminal or directly from scripts.
 
-## Requirements
+## Installation and requirements
 
-- Node.js 20.17.0 or newer.
+- Node.js 22.13 or newer within the Node 22 line, Node.js 24, or Node.js 26.
 - A terminal with stdin and stdout attached to a TTY for the interactive menu.
 - Codex or Claude Code for installing the currently shipped skills.
+
+After the first npm publication, install the CLI globally:
+
+```bash
+npm install --global @orbit-collective/skills@0.1.0
+orbit-skills --version
+```
+
+Run a specific published version without a global installation:
+
+```bash
+npm exec --yes --package=@orbit-collective/skills@0.1.0 -- orbit-skills list
+npx --yes --package=@orbit-collective/skills@0.1.0 orbit-skills info document-feature
+```
+
+The repository is prepared for publication, but these registry commands become available only after the package owner completes the separate first publication.
 
 The terminal UI uses blue as its single accent because this repository does not define a brand color. Green means success or current, yellow means warning or local changes, red means error or conflict, and muted text means missing or informational. Every colored status also contains a text label. Set `NO_COLOR=1` to disable colors.
 
@@ -22,7 +38,17 @@ node dist/cli.js
 
 During development, `npm start -- <arguments>` also runs `dist/cli.js`, so build after source changes.
 
-The package is currently private. A future published package could be installed globally with `npm install --global @orbit-collective/skills`, but that is not an installation path available from the current repository state.
+Local execution uses the checkout rather than npm:
+
+```bash
+node dist/cli.js --help
+```
+
+## Supported environments
+
+The package declares Linux, macOS, and Windows support on Node.js 22.13+, 24, and 26. The CI release gate exercises every one of those nine combinations, including filesystem operations, locks, rename-based metadata writes, built CLI execution, and installation of the packed tarball.
+
+Before the first release, only Linux with Node.js 26 has been verified locally. The macOS, Windows, Node.js 22 minimum, and Node.js 24 claims remain release blockers until their GitHub-hosted CI jobs pass. Node.js 20 and older releases are unsupported because they are end-of-life. Odd-numbered end-of-life Node.js releases are not declared. Lock recovery that requires Linux `/proc`, machine identity, and boot identity intentionally refuses ambiguous removal on platforms where those identities are unavailable; normal locking and diagnostics remain available.
 
 ## Interactive menu
 
@@ -130,6 +156,20 @@ Updates stage a new copy and keep a journal plus a verified backup outside the s
 
 The lock cannot protect against unrelated processes that ignore it, and dry-run is only a snapshot. The CLI rechecks after acquiring the lock, but it does not promise power-loss durability or protection from arbitrary concurrent filesystem changes.
 
+## Updating the CLI and installed skills
+
+Updating the npm CLI and updating installed skills are separate operations:
+
+```bash
+# Replace the globally installed CLI package.
+npm install --global @orbit-collective/skills@latest
+
+# Use that CLI's packaged catalog to update selected installed skill content.
+orbit-skills update document-feature --agent codex
+```
+
+Changing the CLI package alone does not rewrite installed skills, their metadata, or existing backups. Installation metadata records the package version that last installed or updated a skill, while update decisions use verified content fingerprints. A successful skill update writes new metadata and retains the previous managed installation in its transaction backup. Use `status`, `doctor`, `recover`, and `cleanup` rather than editing those files manually.
+
 ## Development
 
 Run all checks with:
@@ -138,6 +178,9 @@ Run all checks with:
 npm run typecheck
 npm run build
 npm test
+npm run validate:catalog
+npm run check:package
+npm run test:package
 ```
 
 CLI integration tests use a temporary `HOME`; they never target real agent directories. Some restricted sandboxes cannot start subprocesses and mark those cases skipped. Run the integration test outside such a sandbox to execute the built CLI:
@@ -147,3 +190,5 @@ node test/cli-integration.test.js
 ```
 
 See [Add an official skill](documentation/en/skills/01-adding-an-official-skill.md) for catalog rules and [Use the CLI and interactive menu](documentation/en/skills/02-using-orbit-skills.md) for the terminal flows.
+
+Release history is recorded in [CHANGELOG.md](CHANGELOG.md). Maintainers should follow [RELEASING.md](RELEASING.md) for the exact local artifact checks, first-publication prerequisites, trusted publishing setup, and post-publication verification.

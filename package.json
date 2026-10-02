@@ -1,10 +1,12 @@
 {
   "name": "@orbit-collective/skills",
   "version": "0.1.0",
-  "description": "Shared AI agent skills for the Orbit ecosystem",
+  "description": "Install and safely manage official Orbit skills for AI coding agents",
   "keywords": [
-    "awesome",
-    "awesome-list",
+    "orbit",
+    "cli",
+    "codex",
+    "claude-code",
     "skills",
     "agents",
     "ai"
@@ -20,22 +22,42 @@
   "license": "MIT",
   "author": "Adiksuu",
   "engines": {
-    "node": ">=20.17.0"
+    "node": "^22.13.0 || ^24.0.0 || ^26.0.0"
   },
   "type": "module",
-  "private": true,
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
   "bin": {
     "orbit-skills": "./dist/cli.js"
   },
   "files": [
     "dist",
-    "skills"
+    "skills",
+    "documentation",
+    "CHANGELOG.md",
+    "LICENSE",
+    "README.md",
+    "RELEASING.md"
   ],
   "scripts": {
-    "build": "tsc",
+    "clean": "node scripts/release/clean.mjs",
+    "build": "npm run clean && tsc",
     "start": "node dist/cli.js",
     "test": "npm run build && node --test test/*.test.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "validate:catalog": "node scripts/release/validate-catalog.mjs",
+    "check:package": "node scripts/release/check-package.mjs",
+    "test:artifact": "node scripts/release/test-tarball.mjs",
+    "test:package": "node scripts/release/pack-and-test.mjs",
+    "release:verify": "npm run typecheck && npm test && npm run validate:catalog && npm run check:package",
+    "prepack": "npm run release:verify"
   },
   "devDependencies": {
     "@types/node": "^26.6.3",
