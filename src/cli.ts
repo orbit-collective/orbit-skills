@@ -8,6 +8,8 @@ import { installSkills } from "./commands/install.js";
 import { showSkillsStatus } from "./commands/status.js";
 import { updateSkills } from "./commands/update.js";
 import { diagnoseInstallation } from "./commands/doctor.js";
+import { recoverInterruptedUpdate } from "./commands/recover.js";
+import { cleanupBackups } from "./commands/cleanup.js";
 import { packageVersion } from "./package-info.js";
 
 const packageJson: unknown = JSON.parse(
@@ -68,7 +70,23 @@ program
     .command("doctor")
     .description("Inspect installation locks and update workspaces.")
     .requiredOption("--agent <id>", "Target agent.")
+    .option("--clear-lock <lock-id>", "Clear a provably abandoned lock with this exact lock ID.")
     .action(diagnoseInstallation);
+
+program
+    .command("recover")
+    .description("Recover one interrupted update transaction.")
+    .requiredOption("--agent <id>", "Target agent.")
+    .requiredOption("--transaction <name>", "Exact update workspace name shown by doctor.")
+    .action(recoverInterruptedUpdate);
+
+program
+    .command("cleanup")
+    .description("Remove verified backups from completed updates.")
+    .requiredOption("--agent <id>", "Target agent.")
+    .option("--dry-run", "Show what would be removed without changing files.")
+    .option("--keep <count>", "Keep this many newest verified backups.", "3")
+    .action(cleanupBackups);
 
 program.action(() => {
     program.help();
