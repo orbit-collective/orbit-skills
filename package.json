@@ -1,6 +1,6 @@
 {
   "name": "@orbit-collective/skills",
-  "version": "0.1.1",
+  "version": "0.1.0",
   "description": "Install and safely manage official Orbit skills for AI coding agents",
   "keywords": [
     "orbit",
@@ -57,7 +57,8 @@
     "test:artifact": "node scripts/release/test-tarball.mjs",
     "test:package": "node scripts/release/pack-and-test.mjs",
     "release:verify": "npm run typecheck && npm test && npm run validate:catalog && npm run check:package",
-    "prepack": "npm run release:verify"
+    "prepack": "npm run release:verify",
+    "prepare": "node scripts/install-git-hooks.mjs"
   },
   "devDependencies": {
     "@types/node": "^26.6.3",

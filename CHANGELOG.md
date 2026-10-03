@@ -2,7 +2,7 @@
 
 This project follows Semantic Versioning for the npm package. Official skills do not have separate versions; they are delivered by the package version.
 
-## 0.1.0
+## 0.1.0 (2026-10-02)
 
 First public release candidate of `@orbit-collective/skills`.
 
@@ -12,6 +12,4 @@ First public release candidate of `@orbit-collective/skills`.
 - Recover interrupted updates, inspect cooperative locks, and clean verified completed backups.
 - Produce versioned JSON for catalog, skill information, status, and diagnostics.
 - Validate package contents and exercise the packed tarball in an isolated environment before publication.
-
-No publication date is recorded because this version has not been published by this repository preparation.
 
