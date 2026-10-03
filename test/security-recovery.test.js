@@ -22,6 +22,13 @@ import {
 import { updateSkill } from "../dist/installation/update-skill.js";
 
 const SKILL_ID = "document-feature";
+const MACHINE_ID = "a".repeat(32);
+const BOOT_ID = "11111111-1111-4111-8111-111111111111";
+const identity = {
+    readMachineId: async () => MACHINE_ID,
+    readBootId: async () => BOOT_ID,
+    readProcessStartTicks: async () => "12345",
+};
 
 async function fixture(t) {
     const root = await mkdtemp(join(tmpdir(), "orbit-skills-test-"));
@@ -204,11 +211,11 @@ test("an active lock cannot be cleared even with its exact lock id", async (t) =
         const owner = await readInstallationLock(adapter);
         assert.ok(owner);
         await assert.rejects(
-            clearAbandonedInstallationLock(adapter, owner.lockId),
+            clearAbandonedInstallationLock(adapter, owner.lockId, identity),
             /active|running/i,
         );
         assert.equal((await readInstallationLock(adapter)).lockId, owner.lockId);
-    });
+    }, identity);
 });
 
 test("a lock directory without owner metadata is ambiguous and cannot be treated as absent", async (t) => {
@@ -255,7 +262,7 @@ test("a lock with a mismatched process-start identity can be cleared only by exa
     let owner;
     await withInstallationLock(adapter, async () => {
         owner = await readInstallationLock(adapter);
-    });
+    }, identity);
     const lockDirectory = join(dirname(skillsDirectory), ".orbit-skills.lock");
     await mkdir(lockDirectory);
     await writeFile(
@@ -263,8 +270,8 @@ test("a lock with a mismatched process-start identity can be cleared only by exa
         JSON.stringify({ ...owner, processStartTicks: "0" }),
     );
 
-    await assert.rejects(clearAbandonedInstallationLock(adapter, "00000000-0000-0000-0000-000000000000"), /does not match/i);
-    await clearAbandonedInstallationLock(adapter, owner.lockId);
+    await assert.rejects(clearAbandonedInstallationLock(adapter, "00000000-0000-0000-0000-000000000000", identity), /does not match/i);
+    await clearAbandonedInstallationLock(adapter, owner.lockId, identity);
     assert.equal(await readInstallationLock(adapter), null);
 });
 
@@ -273,7 +280,7 @@ test("a lock from another host is never cleared automatically", async (t) => {
     let owner;
     await withInstallationLock(adapter, async () => {
         owner = await readInstallationLock(adapter);
-    });
+    }, identity);
     const lockDirectory = join(dirname(skillsDirectory), ".orbit-skills.lock");
     await mkdir(lockDirectory);
     await writeFile(
@@ -400,8 +407,8 @@ test("a lock from a previous boot of the same machine can be cleared by exact id
     let owner;
     await withInstallationLock(adapter, async () => {
         owner = await readInstallationLock(adapter);
-    });
-    assert.ok(owner.machineId);
+    }, identity);
+    assert.equal(owner.machineId, MACHINE_ID);
     const lockDirectory = join(dirname(skillsDirectory), ".orbit-skills.lock");
     await mkdir(lockDirectory);
     await writeFile(
@@ -412,6 +419,20 @@ test("a lock from a previous boot of the same machine can be cleared by exact id
         }),
     );
 
-    await clearAbandonedInstallationLock(adapter, owner.lockId);
+    await clearAbandonedInstallationLock(adapter, owner.lockId, identity);
     assert.equal(await readInstallationLock(adapter), null);
+});
+
+test("a lock cannot be cleared when the machine identity is unavailable", async (t) => {
+    const { adapter } = await fixture(t);
+    await withInstallationLock(adapter, async () => {
+        const owner = await readInstallationLock(adapter);
+        await assert.rejects(
+            clearAbandonedInstallationLock(adapter, owner.lockId, {
+                ...identity,
+                readMachineId: async () => null,
+            }),
+            /machine identity is unavailable/i,
+        );
+    }, identity);
 });
