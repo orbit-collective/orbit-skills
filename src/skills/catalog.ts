@@ -61,6 +61,41 @@ const declaredSkills: readonly DeclaredSkill[] = [
         usage: "Use it to remove verified dead code, unused imports, and outdated comments in a defined scope of the Orbit repository without changing behavior.",
         supportedAgents: ["codex", "claude-code"],
     },
+    {
+        id: "fix-review",
+        name: "Fix Review",
+        description: "Fix findings from an Orbit code review (the review skill's P0-P3 output, PR review comments, or a pasted list) one at a time, each with a regression test and verification, without widening the scope. Use for /fix-review and for requests to address or apply review feedback.",
+        usage: "Use it to apply findings from the review skill or PR review comments in the Orbit repository, one fix and regression test per finding.",
+        supportedAgents: ["codex", "claude-code"],
+    },
+    {
+        id: "extend-orbit",
+        name: "Extend Orbit",
+        description: "Extend Orbit by following its own step-by-step guides in documentation/en/ (permissions, notifications, integrations, automation, issue types, shortcuts, settings tabs, theme colors and more), so new code matches the established pattern and nothing in the checklist is missed. Use for /extend-orbit and whenever the user asks to add a new instance of an existing Orbit concept, such as a permission, notification type, integration, alert type, shortcut, or settings tab.",
+        usage: "Use it to add a new instance of an existing Orbit extensibility point by following the matching guide in documentation/en/.",
+        supportedAgents: ["codex", "claude-code"],
+    },
+    {
+        id: "fix-ci",
+        name: "Fix CI",
+        description: "Diagnose and fix a failing Orbit CI run (type check, lint, Vitest with coverage, build, Pest with coverage) by reading the real logs, reproducing the failing job locally in Docker, and fixing the root cause. Use for /fix-ci and whenever the user says CI, a check, or a GitHub Actions job is red.",
+        usage: "Use it to diagnose a failing Orbit CI run from its logs, reproduce the failing job in Docker, and fix the root cause without weakening checks.",
+        supportedAgents: ["codex", "claude-code"],
+    },
+    {
+        id: "deps-update",
+        name: "Deps Update",
+        description: "Review and land dependency updates in Orbit (Dependabot npm and Docker PRs, or a manual npm/composer update) by checking changelogs for breaking changes, running the full CI suite in Docker with fresh dependencies, and fixing or reporting incompatibilities. Use for /deps-update and for requests to handle Dependabot PRs or update packages.",
+        usage: "Use it to assess Dependabot or manual dependency updates in Orbit, check changelogs for breaking changes, and verify them with the full CI suite.",
+        supportedAgents: ["codex", "claude-code"],
+    },
+    {
+        id: "create-pr",
+        name: "Create PR",
+        description: "Open a GitHub pull request for the branch that is currently checked out, covering every change on it against master. Runs the full CI suite locally first (the same jobs as .github/workflows/ci.yml), then writes a conventional-commit title and a fully filled-in .github/pull_request_template.md body in English. Use whenever the user asks to create, open, raise, or prepare a PR.",
+        usage: "Use it to open an Orbit pull request after running the full CI suite locally, with a conventional-commit title and a filled-in PR template.",
+        supportedAgents: ["codex", "claude-code"],
+    },
 ];
 
 export function getSkillDirectoryUrl(skillId: string): URL {
