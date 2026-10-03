@@ -76,4 +76,4 @@ For UI libraries (Headless UI, lucide-react, Tailwind, Inertia), also start the 
 
 ## Final report
 
-For each update: package, from → to, risk group, what the changelog says that matters for Orbit, the checks run and their results, and a recommendation (safe to merge / merge after the fix on this branch / hold, with the reason). If you prepared a commit, use the repository's style, e.g. `deps(deps): bump lucide-react from 0.x to 0.y` or `chore(deps-dev): bump vitest ...`.
+For each update: package, from → to, risk group, what the changelog says that matters for Orbit, the checks run and their results, and a recommendation (safe to merge / merge after the fix on this branch / hold, with the reason). If you prepared a commit (use the `commit` skill, manifest and lockfile together), use the repository's style, e.g. `deps(deps): bump lucide-react from 0.x to 0.y` or `chore(deps-dev): bump vitest ...`.

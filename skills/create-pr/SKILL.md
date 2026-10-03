@@ -33,7 +33,7 @@ Then read the actual diff for the substantive files (`git diff origin/master...H
 Checks before going further:
 
 - If the current branch **is** `master`, stop and tell the user; there is nothing to open a PR from.
-- If `git status --short` is non-empty, tell the user which files are uncommitted and ask whether to commit them, include them, or leave them out. Do not commit on their behalf without an answer.
+- If `git status --short` is non-empty, tell the user which files are uncommitted and ask whether to commit them, include them, or leave them out. Do not commit on their behalf without an answer; if they want them committed, follow the `commit` skill.
 - If there are no commits ahead of `origin/master`, stop and say so.
 - Push the branch if needed: `git push -u origin <branch>`.
 - If a PR already exists (`gh pr view --json number,url,title`), do not open a second one. Report the existing PR and offer to update its title/body instead (`gh pr edit`).

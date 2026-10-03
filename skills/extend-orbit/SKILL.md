@@ -11,7 +11,7 @@ Orbit documents every extensibility point as a copy-pasteable "how do I add X" g
 
 - The guide is the source of truth for the pattern. The current code is the source of truth for details. If they disagree, follow the code and report the drift (see "Guide drift" below).
 - Implement only what the user asked for. Do not add extra instances "for completeness".
-- Do not commit, push, or open a PR unless asked. The `create-pr` skill handles that.
+- Do not commit, push, or open a PR unless asked. The `commit` and `create-pr` skills handle that.
 - Preserve the user's uncommitted changes and follow `CLAUDE.md`.
 
 ## Step 1: find the matching guide
