@@ -92,6 +92,34 @@ export function validatePackContents(inputPaths) {
     }
 }
 
+const CHANGELOG_ENTRY = /^##\s+\[?v?(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)\]?/m;
+
+export function getLatestChangelogVersion(changelog) {
+    if (typeof changelog !== "string") fail("CHANGELOG.md must be text.");
+    return CHANGELOG_ENTRY.exec(changelog)?.[1];
+}
+
+export function validateVersionConsistency({ manifest, lockfile, releaseManifest, changelog }) {
+    const version = manifest?.version;
+    if (typeof version !== "string") fail("package.json has no version.");
+    if (lockfile?.name !== manifest.name) {
+        fail("package-lock.json name does not match package.json.");
+    }
+    if (lockfile.version !== version) {
+        fail(`package-lock.json version "${lockfile.version}" does not match package.json version "${version}".`);
+    }
+    if (lockfile.packages?.[""]?.version !== version) {
+        fail(`package-lock.json root package version "${lockfile.packages?.[""]?.version}" does not match package.json version "${version}".`);
+    }
+    if (releaseManifest?.["."] !== version) {
+        fail(`.release-please-manifest.json version "${releaseManifest?.["."]}" does not match package.json version "${version}".`);
+    }
+    const changelogVersion = getLatestChangelogVersion(changelog);
+    if (changelogVersion !== version) {
+        fail(`the latest CHANGELOG.md entry "${changelogVersion}" does not match package.json version "${version}".`);
+    }
+}
+
 export function validateReleaseTag(manifest, tag) {
     validateManifest(manifest);
     if (tag !== `v${manifest.version}`) {
