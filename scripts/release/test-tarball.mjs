@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import { spawnNpm } from "./npm.mjs";
 import {
     lstat,
     mkdir,
@@ -24,8 +25,6 @@ const sandbox = await mkdtemp(join(tmpdir(), "orbit-skills-artifact-"));
 const project = join(sandbox, "consumer");
 const home = join(sandbox, "home");
 const npmCache = join(sandbox, "npm-cache");
-const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
-const npxCommand = process.platform === "win32" ? "npx.cmd" : "npx";
 const env = {
     ...process.env,
     HOME: home,
@@ -38,7 +37,10 @@ const env = {
 };
 
 function run(command, args, cwd = project) {
-    const result = spawnSync(command, args, { cwd, env, encoding: "utf8" });
+    const options = { cwd, env, encoding: "utf8" };
+    const result = command === "npm"
+        ? spawnNpm(args, options)
+        : spawnSync(command, args, { ...options, shell: command === "npx" && process.platform === "win32" });
     if (result.error) throw result.error;
     if (result.status !== 0) {
         throw new Error(
@@ -65,8 +67,8 @@ async function listFiles(directory, relative = "") {
 try {
     await mkdir(project, { recursive: true });
     await mkdir(home, { recursive: true });
-    run(npmCommand, ["init", "--yes"]);
-    run(npmCommand, [
+    run("npm", ["init", "--yes"]);
+    run("npm", [
         "install",
         "--ignore-scripts",
         "--no-package-lock",
@@ -125,10 +127,10 @@ try {
     run(process.execPath, [cli, "cleanup", "--agent", "codex", "--dry-run"]);
 
     const packageArgument = `--package=${tarball}`;
-    if (run(npmCommand, ["exec", "--yes", "--offline", packageArgument, "--", "orbit-skills", "--version"]).trim() !== manifest.version) {
+    if (run("npm", ["exec", "--yes", "--offline", packageArgument, "--", "orbit-skills", "--version"]).trim() !== manifest.version) {
         throw new Error("npm exec did not run the local tarball.");
     }
-    const npxInfo = JSON.parse(run(npxCommand, [
+    const npxInfo = JSON.parse(run("npx", [
         "--yes",
         "--offline",
         packageArgument,

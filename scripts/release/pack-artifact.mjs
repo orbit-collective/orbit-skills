@@ -1,13 +1,11 @@
-import { spawnSync } from "node:child_process";
+import { spawnNpm } from "./npm.mjs";
 import { mkdir, mkdtemp, readdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
 
 const parent = resolve(process.argv[2] ?? process.cwd());
 await mkdir(parent, { recursive: true });
 const destination = await mkdtemp(join(parent, "orbit-skills-release-"));
-const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
-const result = spawnSync(
-    npmCommand,
+const result = spawnNpm(
     ["pack", "--pack-destination", destination],
     { encoding: "utf8" },
 );
