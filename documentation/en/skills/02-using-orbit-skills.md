@@ -12,12 +12,14 @@ npm run build
 node dist/cli.js
 ```
 
-With stdin and stdout connected to a TTY, no arguments open the menu. Redirected execution prints help and exits. Before the first publication, use the local command above. After publication, install or execute an explicit registry version:
+With stdin and stdout connected to a TTY, no arguments open the menu. Redirected execution prints help and exits. To work from a checkout, use the local command above. To use the published package, install or execute an explicit registry version:
 
+<!-- x-release-please-start-version -->
 ```bash
 npm install --global @orbit-collective/skills@0.1.0
 npm exec --yes --package=@orbit-collective/skills@0.1.0 -- orbit-skills list
 ```
+<!-- x-release-please-end -->
 
 ## Step 2 — Navigate and search
 
