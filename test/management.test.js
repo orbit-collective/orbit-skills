@@ -283,5 +283,5 @@ test("the Claude Code adapter uses the official personal skills directory", () =
     const adapter = createClaudeCodeAdapter("/tmp/example-home");
 
     assert.equal(adapter.id, "claude-code");
-    assert.equal(adapter.getSkillsDirectory(), "/tmp/example-home/.claude/skills");
+    assert.equal(adapter.getSkillsDirectory(), join("/tmp/example-home", ".claude", "skills"));
 });

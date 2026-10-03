@@ -81,6 +81,18 @@ function sameOwner(
     );
 }
 
+export interface SystemIdentity {
+    readMachineId(): Promise<string | null>;
+    readBootId(): Promise<string | null>;
+    readProcessStartTicks(pid: number): Promise<string | null>;
+}
+
+const defaultIdentity: SystemIdentity = {
+    readMachineId,
+    readBootId,
+    readProcessStartTicks,
+};
+
 async function readBootId(): Promise<string | null> {
     try {
         const value = (await readFile("/proc/sys/kernel/random/boot_id", "utf8")).trim();
@@ -172,6 +184,7 @@ export async function readInstallationLock(
 export async function clearAbandonedInstallationLock(
     adapter: AgentAdapter,
     expectedLockId: string,
+    identity: SystemIdentity = defaultIdentity,
 ): Promise<void> {
     const owner = await readInstallationLock(adapter);
     if (!owner) throw new Error("No installation lock exists.");
@@ -184,21 +197,21 @@ export async function clearAbandonedInstallationLock(
     if (owner.hostname !== hostname()) {
         throw new Error("The installation lock belongs to another host; refusing removal.");
     }
-    const machineId = await readMachineId();
+    const machineId = await identity.readMachineId();
     if (owner.machineId === null || machineId === null) {
         throw new Error("The machine identity is unavailable; refusing ambiguous lock removal.");
     }
     if (owner.machineId !== machineId) {
         throw new Error("The installation lock belongs to another machine; refusing removal.");
     }
-    const bootId = await readBootId();
+    const bootId = await identity.readBootId();
     if (owner.bootId === null || bootId === null) {
         throw new Error(
             "The operating-system boot identity is unavailable; refusing ambiguous lock removal.",
         );
     }
     if (owner.bootId === bootId) {
-        const currentStartTicks = await readProcessStartTicks(owner.pid);
+        const currentStartTicks = await identity.readProcessStartTicks(owner.pid);
         if (owner.processStartTicks === null) {
             throw new Error("The lock has no process-start identity; refusing ambiguous removal.");
         }
@@ -217,6 +230,7 @@ export async function clearAbandonedInstallationLock(
 export async function withInstallationLock<T>(
     adapter: AgentAdapter,
     operation: (assertOwnership: () => Promise<void>) => Promise<T>,
+    identity: SystemIdentity = defaultIdentity,
 ): Promise<T> {
     const parentDirectory = dirname(adapter.getSkillsDirectory());
     const lockDirectory = lockDirectoryFor(adapter);
@@ -236,15 +250,15 @@ export async function withInstallationLock<T>(
 
     let owner: InstallationLockOwner;
     try {
-        const processStartTicks = await readProcessStartTicks(process.pid);
+        const processStartTicks = await identity.readProcessStartTicks(process.pid);
         owner = {
             schemaVersion: 2,
             managedBy: packageName,
             lockId: randomUUID(),
             pid: process.pid,
             hostname: hostname(),
-            machineId: await readMachineId(),
-            bootId: await readBootId(),
+            machineId: await identity.readMachineId(),
+            bootId: await identity.readBootId(),
             processStartTicks,
             startedAt: new Date().toISOString(),
             agentId: adapter.id,
