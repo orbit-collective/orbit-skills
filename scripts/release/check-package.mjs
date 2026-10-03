@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { spawnNpm } from "./npm.mjs";
 import { readFile } from "node:fs/promises";
 
 import {
@@ -11,9 +11,7 @@ const root = new URL("../../", import.meta.url);
 const manifest = JSON.parse(await readFile(new URL("package.json", root), "utf8"));
 validateManifest(manifest);
 
-const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
-const packed = spawnSync(
-    npmCommand,
+const packed = spawnNpm(
     ["pack", "--dry-run", "--json", "--ignore-scripts"],
     { cwd: root, encoding: "utf8" },
 );
