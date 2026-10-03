@@ -8,8 +8,9 @@
 - A terminal with stdin and stdout attached to a TTY for the interactive menu.
 - Codex or Claude Code for installing the currently shipped skills.
 
-After the first npm publication, install the CLI globally:
+Install the CLI globally:
 
+<!-- x-release-please-start-version -->
 ```bash
 npm install --global @orbit-collective/skills@0.1.0
 orbit-skills --version
@@ -21,8 +22,9 @@ Run a specific published version without a global installation:
 npm exec --yes --package=@orbit-collective/skills@0.1.0 -- orbit-skills list
 npx --yes --package=@orbit-collective/skills@0.1.0 orbit-skills info document-feature
 ```
+<!-- x-release-please-end -->
 
-The repository is prepared for publication, but these registry commands become available only after the package owner completes the separate first publication.
+The version in these commands is updated automatically by each release.
 
 The terminal UI uses blue as its single accent because this repository does not define a brand color. Green means success or current, yellow means warning or local changes, red means error or conflict, and muted text means missing or informational. Every colored status also contains a text label. Set `NO_COLOR=1` to disable colors.
 
@@ -188,6 +190,10 @@ CLI integration tests use a temporary `HOME`; they never target real agent direc
 ```bash
 node test/cli-integration.test.js
 ```
+
+`npm install` (or `npm ci`) in a Git checkout points `core.hooksPath` at `.githooks/`. Its `pre-push` hook runs `npm run release:verify` — the same type-check, tests, catalog validation, and package-content check that CI runs — so a broken push is caught locally. Use `git push --no-verify` only when you knowingly need to bypass it.
+
+Versions are managed by release-please; never edit the version in `package.json` by hand. See [RELEASING.md](RELEASING.md).
 
 See [Add an official skill](documentation/en/skills/01-adding-an-official-skill.md) for catalog rules and [Use the CLI and interactive menu](documentation/en/skills/02-using-orbit-skills.md) for the terminal flows.
 

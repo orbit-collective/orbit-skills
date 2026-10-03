@@ -12,12 +12,14 @@ npm run build
 node dist/cli.js
 ```
 
-Brak argumentów otwiera menu, gdy stdin i stdout są połączone z TTY. Przy przekierowaniu program wyświetla pomoc i kończy działanie. Przed pierwszą publikacją używaj powyższego polecenia lokalnego. Po publikacji zainstaluj albo uruchom jawną wersję z rejestru:
+Brak argumentów otwiera menu, gdy stdin i stdout są połączone z TTY. Przy przekierowaniu program wyświetla pomoc i kończy działanie. Pracując na kopii repozytorium, używaj powyższego polecenia lokalnego. Aby użyć opublikowanej paczki, zainstaluj albo uruchom jawną wersję z rejestru:
 
+<!-- x-release-please-start-version -->
 ```bash
 npm install --global @orbit-collective/skills@0.1.0
 npm exec --yes --package=@orbit-collective/skills@0.1.0 -- orbit-skills list
 ```
+<!-- x-release-please-end -->
 
 ## Krok 2 — Nawiguj i wyszukuj
 
