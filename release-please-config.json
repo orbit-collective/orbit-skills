@@ -1,0 +1,21 @@
+{
+    "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+    "bootstrap-sha": "07e4d0f49e72cb3966e3e82638a0c3d3716c0f27",
+    "packages": {
+        ".": {
+            "release-type": "node",
+            "package-name": "@orbit-collective/skills",
+            "changelog-path": "CHANGELOG.md",
+            "include-component-in-tag": false,
+            "bump-minor-pre-major": true,
+            "bump-patch-for-minor-pre-major": true,
+            "draft": false,
+            "prerelease": false,
+            "extra-files": [
+                "README.md",
+                "documentation/en/skills/02-using-orbit-skills.md",
+                "documentation/pl/skills/02-using-orbit-skills.md"
+            ]
+        }
+    }
+}

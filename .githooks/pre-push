@@ -1,0 +1,8 @@
+#!/bin/sh
+# Runs the same verification as CI before anything leaves this machine.
+# Install with `npm install` (the prepare script sets core.hooksPath).
+# Skip once in an emergency with `git push --no-verify`.
+set -e
+
+echo "pre-push: running npm run release:verify (typecheck, tests, catalog, package contents)..."
+npm run --silent release:verify
