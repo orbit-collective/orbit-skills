@@ -16,8 +16,8 @@ Brak argumentów otwiera menu, gdy stdin i stdout są połączone z TTY. Przy pr
 
 <!-- x-release-please-start-version -->
 ```bash
-npm install --global @orbit-collective/skills@0.1.1
-npm exec --yes --package=@orbit-collective/skills@0.1.1 -- orbit-skills list
+npm install --global @orbit-collective/skills@0.1.2
+npm exec --yes --package=@orbit-collective/skills@0.1.2 -- orbit-skills list
 ```
 <!-- x-release-please-end -->
 
