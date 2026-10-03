@@ -12,15 +12,15 @@ Install the CLI globally:
 
 <!-- x-release-please-start-version -->
 ```bash
-npm install --global @orbit-collective/skills@0.1.0
+npm install --global @orbit-collective/skills@0.1.1
 orbit-skills --version
 ```
 
 Run a specific published version without a global installation:
 
 ```bash
-npm exec --yes --package=@orbit-collective/skills@0.1.0 -- orbit-skills list
-npx --yes --package=@orbit-collective/skills@0.1.0 orbit-skills info document-feature
+npm exec --yes --package=@orbit-collective/skills@0.1.1 -- orbit-skills list
+npx --yes --package=@orbit-collective/skills@0.1.1 orbit-skills info document-feature
 ```
 <!-- x-release-please-end -->
 
