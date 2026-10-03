@@ -7,9 +7,14 @@ import {
     validateManifest,
     validatePackContents,
     validateReleaseTag,
+    validateVersionConsistency,
 } from "../scripts/release/package-contract.mjs";
 
-const manifest = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
+const readRepoFile = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
+const manifest = JSON.parse(await readRepoFile("package.json"));
+const lockfile = JSON.parse(await readRepoFile("package-lock.json"));
+const releaseManifest = JSON.parse(await readRepoFile(".release-please-manifest.json"));
+const changelog = await readRepoFile("CHANGELOG.md");
 
 test("the release manifest describes a public portable CLI package", () => {
     assert.doesNotThrow(() => validateManifest(manifest));
@@ -61,9 +66,42 @@ test("the package contract rejects developer files and installation metadata", (
 });
 
 test("the release tag must exactly match the package version", () => {
-    assert.doesNotThrow(() => validateReleaseTag(manifest, "v0.1.0"));
-    assert.throws(() => validateReleaseTag(manifest, "v0.1.1"), /does not match/i);
-    assert.throws(() => validateReleaseTag(manifest, "0.1.0"), /does not match/i);
+    assert.doesNotThrow(() => validateReleaseTag(manifest, `v${manifest.version}`));
+    assert.throws(() => validateReleaseTag(manifest, `v${manifest.version}-mismatch`), /does not match/i);
+    assert.throws(() => validateReleaseTag(manifest, manifest.version), /does not match/i);
+});
+
+test("package.json, package-lock.json, release manifest, and changelog agree on the version", () => {
+    assert.doesNotThrow(() => validateVersionConsistency({ manifest, lockfile, releaseManifest, changelog }));
+});
+
+test("the version consistency check rejects every kind of drift", () => {
+    const version = "1.2.3";
+    const consistent = () => ({
+        manifest: { name: "@orbit-collective/skills", version },
+        lockfile: {
+            name: "@orbit-collective/skills",
+            version,
+            packages: { "": { name: "@orbit-collective/skills", version } },
+        },
+        releaseManifest: { ".": version },
+        changelog: `# Changelog\n\nIntro.\n\n## [${version}](https://example.test) (2026-01-01)\n\n## 1.2.2\n`,
+    });
+    assert.doesNotThrow(() => validateVersionConsistency(consistent()));
+
+    const drifts = [
+        [(input) => { input.lockfile.version = "1.2.2"; }, /package-lock\.json version/],
+        [(input) => { input.lockfile.packages[""].version = "1.2.2"; }, /root package version/],
+        [(input) => { input.lockfile.name = "other"; }, /package-lock\.json name/],
+        [(input) => { input.releaseManifest["."] = "1.2.2"; }, /release-please-manifest/],
+        [(input) => { input.changelog = "# Changelog\n\n## 1.2.2\n"; }, /CHANGELOG\.md entry/],
+        [(input) => { input.changelog = "# Changelog\n"; }, /CHANGELOG\.md entry/],
+    ];
+    for (const [mutate, expected] of drifts) {
+        const input = consistent();
+        mutate(input);
+        assert.throws(() => validateVersionConsistency(input), expected);
+    }
 });
 
 test("npm pack reports are normalized across supported npm formats", () => {

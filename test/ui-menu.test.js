@@ -8,6 +8,7 @@ import {
     filterSkillSelection,
 } from "../dist/menu/skill-selection.js";
 import { runInteractiveMenu } from "../dist/menu/menu.js";
+import { packageVersion } from "../dist/package-info.js";
 import { TerminalPresenter } from "../dist/presentation/terminal.js";
 
 function captureStream({ isTTY = false, columns = 80 } = {}) {
@@ -140,7 +141,7 @@ function menuFixture() {
     const services = {
         getAdapters: () => [adapter],
         getSkills: async () => [skills[0]],
-        getInfo: async () => ({ ...skills[0], packageVersion: "0.1.0" }),
+        getInfo: async () => ({ ...skills[0], packageVersion }),
         getStatus: async () => ({
             agent: { id: "codex", name: "Test Codex" },
             skillsDirectory: adapter.getSkillsDirectory(),

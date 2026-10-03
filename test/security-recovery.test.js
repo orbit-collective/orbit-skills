@@ -13,6 +13,7 @@ import {
     withInstallationLock,
 } from "../dist/installation/lock.js";
 import { writeInstallationMetadata } from "../dist/installation/metadata.js";
+import { packageVersion } from "../dist/package-info.js";
 import { recoverUpdate } from "../dist/installation/recover.js";
 import {
     createUpdateTransaction,
@@ -357,7 +358,7 @@ test("an Orbit-owned but incomplete installation reports missing baseline and pr
             schemaVersion: 1,
             managedBy: "@orbit-collective/skills",
             skillId: SKILL_ID,
-            packageVersion: "0.1.0",
+            packageVersion,
         }),
     );
 
