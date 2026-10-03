@@ -13,7 +13,7 @@ Assess the specified changes in the Orbit repository (Laravel + Inertia.js + Rea
 - Do not commit, push, merge, check out, or run any other operation that changes branch state.
 - Do not post comments, approvals, or change requests to a remote PR unless the user explicitly asked you to publish the review.
 - You may run relevant existing checks as long as they do not modify tracked files or user data. Do not run `php artisan migrate`, `migrate:fresh`, `make fresh`, `make clean`, or anything that touches `database/database.sqlite` or real external services (GitHub, Jira, Discord webhooks, Orbit Relay).
-- Do not fix the problems you find. Hand findings off to a separate task.
+- Do not fix the problems you find. Hand findings off to a separate task, e.g. the `fix-review` skill.
 - Follow `CLAUDE.md` and `.github/copilot-instructions.md`; judge the code against its real contracts and the project's conventions.
 
 ## Establish the comparison range

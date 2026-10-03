@@ -86,7 +86,17 @@ test("install and update without a selection resolve to every available skill", 
     const install = await resolveSkillSelection([], "codex", "install");
     const update = await resolveSkillSelection([], "codex", "update");
 
-    const allSkillIds = ["document-feature", "review", "frontend-polish", "cleanup"];
+    const allSkillIds = [
+        "document-feature",
+        "review",
+        "frontend-polish",
+        "cleanup",
+        "fix-review",
+        "extend-orbit",
+        "fix-ci",
+        "deps-update",
+        "create-pr",
+    ];
     assert.deepEqual(install.map((skill) => skill.id), allSkillIds);
     assert.deepEqual(update.map((skill) => skill.id), allSkillIds);
 });
