@@ -14,7 +14,7 @@ Refine the specified Orbit interface (Inertia.js + React/TypeScript + Tailwind) 
 - Do not change controllers, routes, Inertia prop shapes, the database, business rules, Policies, or permissions. Work with the props and contracts that already exist.
 - Do not add dependencies, a new component library, or a new icon set without a separate request. Icons come from `lucide-react` via `Components/Atoms/Icon`; overlays use the existing `Modal`/`useFloatingDropdown` patterns and `@headlessui/react` already in the project.
 - Do not implement actions the backend does not support. Never show fake success or fake progress.
-- Do not create commits, PRs, or publish anything unless the user already asked for it.
+- Do not create commits, PRs, or publish anything unless the user already asked for it. When they do, use the `commit` and `create-pr` skills.
 - Preserve the user's existing changes and follow `CLAUDE.md`.
 
 ## Process
@@ -56,7 +56,7 @@ Check only what applies to the target interface.
 
 ### Responsiveness and performance
 
-- Check narrow and wide viewports and text zoom. Match breakpoints to the layout's existing Tailwind breakpoints and `Sidebar` behavior.
+- Check narrow and wide viewports and text zoom. For a full breakpoint matrix (360 to 1440, zoom, touch), use the `responsive-check` skill. Match breakpoints to the layout's existing Tailwind breakpoints and `Sidebar` behavior.
 - Check overflow, long project/issue/label names, many items (boards, tables, member lists), and that important actions are reachable without hover.
 - Avoid extra network requests (e.g. unnecessary `router.reload`), expensive effects, and unjustified memoization. Base optimization on a concrete problem.
 
