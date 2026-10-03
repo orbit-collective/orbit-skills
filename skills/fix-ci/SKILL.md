@@ -23,7 +23,7 @@ Do not use `make lint` (it runs ESLint with `--fix` and hides failures) or `make
 
 - Fix the cause, never the signal. Do not lower coverage thresholds in `vite.config.js` or `--min` in `composer.json`, disable lint rules, add `@ts-ignore`, mark tests skipped, or loosen assertions to get green. If the user explicitly wants a temporary bypass, make it visible and say so.
 - Do not edit `.github/workflows/*` to make a failure disappear. Change a workflow only when the workflow itself is the bug (e.g. a removed action version), and explain why.
-- Do not re-run CI or push commits unless the user asked.
+- Do not re-run CI or push commits unless the user asked. To commit the fix, use the `commit` skill.
 - Preserve the user's uncommitted changes.
 
 ## Step 1: read the real failure

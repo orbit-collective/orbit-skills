@@ -12,7 +12,7 @@ Apply the findings of a code review to the Orbit repository (Laravel + Inertia.j
 - Fix only the findings you were given. Do not refactor, restyle, or "improve" nearby code. Note unrelated problems you spot and report them separately.
 - Do not change behavior a finding does not cover. If a fix forces a contract change (Inertia prop shape, route, Policy rule, migration), stop and ask before doing it.
 - Never silence a finding instead of fixing it: no `@ts-ignore`, `eslint-disable`, skipped tests, loosened assertions, or lowered coverage thresholds.
-- Do not commit, push, reply to, or resolve PR review threads unless the user asked for it.
+- Do not commit, push, reply to, or resolve PR review threads unless the user asked for it. To commit the fixes, use the `commit` skill.
 - Preserve the user's uncommitted changes. Never use `git reset`, `git clean`, or `git checkout` to discard work.
 - Follow `CLAUDE.md`: Controller → Service → Repository layering, atomic-design components, CSS variables, and the en/pl documentation rule.
 

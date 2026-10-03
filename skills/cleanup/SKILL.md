@@ -15,7 +15,7 @@ Remove verified redundant code and simplify local fragments in the Orbit reposit
 - Do not update dependencies, remove packages, or change tool configuration (`eslint.config.js`, `vite.config.js`, `tsconfig.json`, `phpunit.xml`, `composer.json`, `package.json`) without a separate request.
 - Do not mass-format. Do not run `npm run lint` or `vendor/bin/pint` over the whole repository; limit formatting to the files you changed. Never edit `vendor/`, `node_modules/`, `public/build/`, `coverage*/`, `bootstrap/cache/`, or the lockfiles (`composer.lock`, `package-lock.json`).
 - Do not touch already-run migrations in `database/migrations/` — they are history, even if they reference code that no longer exists.
-- Do not create commits, PRs, or publish anything unless the user explicitly asked for it in this session.
+- Do not create commits, PRs, or publish anything unless the user explicitly asked for it in this session. When they do, use the `commit` skill, keeping the cleanup in `refactor`/`chore` commits separate from behavior changes.
 - Preserve the user's existing changes. Never use `git reset`, `git clean`, or `git checkout` to discard them.
 
 ## Process
