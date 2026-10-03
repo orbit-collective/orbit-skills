@@ -40,6 +40,27 @@ const declaredSkills: readonly DeclaredSkill[] = [
         usage: "Use it to create or extend a bilingual, repository-specific developer guide after first inspecting that repository's documentation conventions.",
         supportedAgents: ["codex", "claude-code"],
     },
+    {
+        id: "review",
+        name: "Review",
+        description: "Review code changes in the Orbit repository (working tree, branch, or PR) and report confirmed bugs, regressions, and significant risks without editing code. Use for /review and for requests to review code or assess changes before merging.",
+        usage: "Use it to review a working tree, branch, or PR in the Orbit repository and get prioritized, evidence-backed findings without any code being changed.",
+        supportedAgents: ["codex", "claude-code"],
+    },
+    {
+        id: "frontend-polish",
+        name: "Frontend Polish",
+        description: "Polish an existing Orbit screen or component for visual consistency, responsiveness, accessibility, and interaction quality. Use for /frontend-polish and for requests to improve the UI/UX or feel of an existing interface.",
+        usage: "Use it to refine an existing Orbit page or component for consistency, accessibility, responsiveness, and interaction quality within the current design system.",
+        supportedAgents: ["codex", "claude-code"],
+    },
+    {
+        id: "cleanup",
+        name: "Cleanup",
+        description: "Clean up code in the Orbit repository within a defined scope without changing its behavior. Use for /cleanup and for requests to remove dead code, unused imports, redundant fragments, or outdated comments.",
+        usage: "Use it to remove verified dead code, unused imports, and outdated comments in a defined scope of the Orbit repository without changing behavior.",
+        supportedAgents: ["codex", "claude-code"],
+    },
 ];
 
 export function getSkillDirectoryUrl(skillId: string): URL {
