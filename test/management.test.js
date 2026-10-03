@@ -96,6 +96,8 @@ test("install and update without a selection resolve to every available skill", 
         "fix-ci",
         "deps-update",
         "create-pr",
+        "commit",
+        "responsive-check",
     ];
     assert.deepEqual(install.map((skill) => skill.id), allSkillIds);
     assert.deepEqual(update.map((skill) => skill.id), allSkillIds);

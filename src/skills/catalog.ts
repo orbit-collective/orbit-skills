@@ -96,6 +96,20 @@ const declaredSkills: readonly DeclaredSkill[] = [
         usage: "Use it to open an Orbit pull request after running the full CI suite locally, with a conventional-commit title and a filled-in PR template.",
         supportedAgents: ["codex", "claude-code"],
     },
+    {
+        id: "commit",
+        name: "Commit",
+        description: "Turn existing changes in the Orbit repository into small, logical commits following Orbit's Conventional Commit rules, with a checked staged diff and scope. Use for /commit and for requests to commit changes or split them into commits.",
+        usage: "Use it to split existing Orbit changes into small, logical Conventional Commits with a checked staged diff, without pushing or rewriting history.",
+        supportedAgents: ["codex", "claude-code"],
+    },
+    {
+        id: "responsive-check",
+        name: "Responsive Check",
+        description: "Audit and fix the responsiveness of existing Orbit pages or components across viewport widths, browser zoom, and touch input. Use for /responsive-check and for requests to audit or improve layout on phones, tablets, and desktop.",
+        usage: "Use it to audit or fix an Orbit page or component across viewport widths, zoom, and touch, with a report of what was actually checked.",
+        supportedAgents: ["codex", "claude-code"],
+    },
 ];
 
 export function getSkillDirectoryUrl(skillId: string): URL {
