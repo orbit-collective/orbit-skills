@@ -48,7 +48,7 @@ If a step needs a migration, make it work with existing rows and SQLite (nullabl
 Run the checks matching what changed:
 
 - `php artisan test --filter=<new or affected tests>`, then `composer test` (or `make test`)
-- `npx tsc --noEmit`, `npx eslint resources/js`, `npx vitest run <affected paths>` (or `make type-check`, `make test-js`)
+- `npx tsc --noEmit`, `npx oxlint resources/js`, `npx vitest run <affected paths>` (or `make type-check`, `make test-js`)
 - `php artisan migrate` against a disposable database only if the change includes a migration and the user's environment allows it. Never run `migrate:fresh` on the user's real `database/database.sqlite` without asking.
 
 Keep the coverage gates in mind (90% backend, `vite.config.js` thresholds frontend). New code should arrive with its tests.

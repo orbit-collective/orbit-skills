@@ -59,14 +59,14 @@ Run them in this order and **stop at the first failure**:
 | CI job | Command |
 | --- | --- |
 | Type check | `make type-check` |
-| Lint | `docker compose run --rm vite npx eslint resources/js` |
+| Lint | `docker compose run --rm vite npx oxlint resources/js` |
 | Component tests (Vitest) | `make test-js-coverage` |
 | Build verification | `docker compose run --rm vite npm run build` |
 | PHP tests (Pest) | `make test-coverage` |
 
 Two of these deliberately bypass the obvious `Makefile` target, because that target does not mirror CI:
 
-- **Lint.** `make lint` runs `npm run lint`, which passes `--fix` and so silently repairs problems that would fail the build. CI runs a bare `npx eslint resources/js`. Use the `docker compose run` form above. If it reports fixable problems, fix them, then re-run that same bare command.
+- **Lint.** `make lint` runs `npm run lint`, which passes `--fix` and so silently repairs problems that would fail the build. CI runs a bare `npx oxlint resources/js`. Use the `docker compose run` form above. If it reports fixable problems, fix them, then re-run that same bare command.
 - **Build.** `make build` builds the Docker *images*; it is not the Vite production build that CI's build job runs. Use the `docker compose run` form above.
 
 Other notes that matter:
@@ -79,7 +79,7 @@ Other notes that matter:
   docker compose run --rm app php -d memory_limit=3G vendor/bin/pest --coverage --min=90
   ```
 
-- Running on the host is a fallback only, for when Docker is unavailable: `npx tsc --noEmit`, `npx eslint resources/js`, `npm run test:coverage`, `npm run build`, `composer test-coverage`. Note that `composer test-coverage` needs PCOV or Xdebug installed on the host and will refuse to run without one. If you fall back, say so when you report the results.
+- Running on the host is a fallback only, for when Docker is unavailable: `npx tsc --noEmit`, `npx oxlint resources/js`, `npm run test:coverage`, `npm run build`, `composer test-coverage`. Note that `composer test-coverage` needs PCOV or Xdebug installed on the host and will refuse to run without one. If you fall back, say so when you report the results.
 
 Other workflows in `.github/workflows/` are not locally reproducible and are not part of this gate: `gemini-review.yml`, `labeler.yml`, `release-please.yml` and `notify-docs-change.yml`. Do not run them, and **do not mention them in the PR body at all**: not in Testing, not as a caveat in Notes. A reviewer does not need to be told that a workflow which runs automatically on the PR will run automatically on the PR, and speculating about what it might report is noise. Mention in the PR body only the commands you actually ran. The same goes for local-environment troubleshooting such as the memory-limit workaround above: it belongs in your report to the user, never in the PR.
 

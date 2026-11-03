@@ -9,7 +9,7 @@ Assess the specified changes in the Orbit repository (Laravel + Inertia.js + Rea
 
 ## Boundaries
 
-- Work in review mode: do not edit code, tests, configuration, or documentation. Do not run auto-fixers or formatters that write files — in particular `npm run lint` (it runs ESLint with `--fix`) and `vendor/bin/pint` without `--test`. Use `npx eslint resources/js` and `vendor/bin/pint --test` instead.
+- Work in review mode: do not edit code, tests, configuration, or documentation. Do not run auto-fixers or formatters that write files — in particular `npm run lint` (it runs Oxlint with `--fix`) and `vendor/bin/pint` without `--test`. Use `npx oxlint resources/js` and `vendor/bin/pint --test` instead.
 - Do not commit, push, merge, check out, or run any other operation that changes branch state.
 - Do not post comments, approvals, or change requests to a remote PR unless the user explicitly asked you to publish the review.
 - You may run relevant existing checks as long as they do not modify tracked files or user data. Do not run `php artisan migrate`, `migrate:fresh`, `make fresh`, `make clean`, or anything that touches `database/database.sqlite` or real external services (GitHub, Jira, Discord webhooks, Orbit Relay).
@@ -52,7 +52,7 @@ Assess the specified changes in the Orbit repository (Laravel + Inertia.js + Rea
 Pick only what is relevant to the change:
 
 - `npx tsc --noEmit`
-- `npx eslint resources/js` (no `--fix`)
+- `npx oxlint resources/js` (no `--fix`)
 - `npx vitest run <path>` for affected frontend tests
 - `php artisan test --filter=<TestName>` for affected backend tests (Pest, in-memory SQLite — safe)
 - `vendor/bin/pint --test` on changed PHP files

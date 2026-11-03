@@ -12,12 +12,12 @@ CI is `.github/workflows/ci.yml`. It runs five jobs and a `ci-status` job that r
 | CI job | Local reproduction (Docker) | Host fallback |
 | --- | --- | --- |
 | Type check | `make type-check` | `npx tsc --noEmit` |
-| Lint | `docker compose run --rm vite npx eslint resources/js` | `npx eslint resources/js` |
+| Lint | `docker compose run --rm vite npx oxlint resources/js` | `npx oxlint resources/js` |
 | Component tests (Vitest) | `make test-js-coverage` | `npm run test:coverage` |
 | Build verification | `docker compose run --rm vite npm run build` | `npm run build` |
 | PHP tests (Pest) | `make test-coverage` | `composer test-coverage` |
 
-Do not use `make lint` (it runs ESLint with `--fix` and hides failures) or `make build` (it builds Docker images, not the Vite bundle) to reproduce CI.
+Do not use `make lint` (it runs Oxlint with `--fix` and hides failures) or `make build` (it builds Docker images, not the Vite bundle) to reproduce CI.
 
 ## Boundaries
 
@@ -52,7 +52,7 @@ Identify the failing job, the failing step, and the first real error (not the ca
 Common causes in this repository, roughly by frequency:
 
 - **Coverage gate.** All tests pass but coverage is below the threshold (90% lines on `app/` for PHP; 80% statements/functions/lines and 75% branches for Vitest). Find the uncovered new code in the coverage report (`coverage-html/` for PHP, the Vitest text summary or `coverage/`) and add behavior tests for it. Do not add tests that only execute lines without asserting anything.
-- **Lint.** CI runs bare `npx eslint resources/js`. Locally `npm run lint` auto-fixes, so failures can slip through. Fix the reported rules properly; run the bare command to confirm.
+- **Lint.** CI runs bare `npx oxlint resources/js`. Locally `npm run lint` auto-fixes, so failures can slip through. Fix the reported rules properly; run the bare command to confirm.
 - **Type check.** Often a changed Inertia prop or a type in `resources/js/types/` that a page or test still uses the old way. Fix the types at the source, not with casts.
 - **Build.** `tsc && vite build`: type errors, or imports with wrong case (Linux CI is case-sensitive, a Windows or macOS host may not be), or missing assets.
 - **PHP tests.** Read the failing assertion. Typical sources: missing `authorize`/Policy changes, factories not updated for a new required column, migrations that do not run on SQLite, order-dependent assertions, time-dependent tests (use `$this->travelTo()`/`Carbon::setTestNow()`), or tests that hit real HTTP (use `Http::fake()`).

@@ -57,8 +57,8 @@ const declaredSkills: readonly DeclaredSkill[] = [
     {
         id: "cleanup",
         name: "Cleanup",
-        description: "Clean up code in the Orbit repository within a defined scope without changing its behavior. Use for /cleanup and for requests to remove dead code, unused imports, redundant fragments, or outdated comments.",
-        usage: "Use it to remove verified dead code, unused imports, and outdated comments in a defined scope of the Orbit repository without changing behavior.",
+        description: "Clean up code in the Orbit repository within a defined scope without changing its behavior, using knip to find unused files, exports, types and dependencies. Use for /cleanup and for requests to remove dead code, unused imports and exports, redundant fragments, or outdated comments.",
+        usage: "Use it to find and remove verified dead code, unused imports and exports, and outdated comments in a defined scope of the Orbit repository, using knip for the frontend, without changing behavior.",
         supportedAgents: ["codex", "claude-code"],
     },
     {
