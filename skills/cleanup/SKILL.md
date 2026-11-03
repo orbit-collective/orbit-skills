@@ -1,6 +1,6 @@
 ---
 name: cleanup
-description: Clean up code in the Orbit repository within a defined scope without changing its behavior. Use for /cleanup and for requests to remove dead code, unused imports, redundant fragments, or outdated comments.
+description: Clean up code in the Orbit repository within a defined scope without changing its behavior, using knip to find unused files, exports, types and dependencies. Use for /cleanup and for requests to remove dead code, unused imports and exports, redundant fragments, or outdated comments.
 ---
 
 # Cleanup
@@ -12,7 +12,8 @@ Remove verified redundant code and simplify local fragments in the Orbit reposit
 - Work only within the scope the user specified. Read dependencies outside it when needed to judge whether a change is safe.
 - Do not add features, fix discovered bugs, or change architecture along the way. Report such issues separately.
 - Do not change routes, controller responses, Inertia prop shapes, the database schema or migrations, Policies, permissions (`App\Enums\Permissions\Permission`), error handling, or visible UI behavior.
-- Do not update dependencies, remove packages, or change tool configuration (`eslint.config.js`, `vite.config.js`, `tsconfig.json`, `phpunit.xml`, `composer.json`, `package.json`) without a separate request.
+- Do not update dependencies, remove packages, or change tool configuration (`.oxlintrc.json`, `vite.config.js`, `tsconfig.json`, `phpunit.xml`, `composer.json`, `package.json`) without a separate request.
+- knip and oxlint can rewrite files across all of `resources/js`, which would break the scope rule above. Use their reports freely, but run a fixer only as described in the Process. Never run knip with `--fix-type dependencies` or `--allow-remove-files` without a separate request, and never edit `knip.json` or `.oxlintrc.json` to make a finding disappear.
 - Do not mass-format. Do not run `npm run lint` or `vendor/bin/pint` over the whole repository; limit formatting to the files you changed. Never edit `vendor/`, `node_modules/`, `public/build/`, `coverage*/`, `bootstrap/cache/`, or the lockfiles (`composer.lock`, `package-lock.json`).
 - Do not touch already-run migrations in `database/migrations/` — they are history, even if they reference code that no longer exists.
 - Do not create commits, PRs, or publish anything unless the user explicitly asked for it in this session. When they do, use the `commit` skill, keeping the cleanup in `refactor`/`chore` commits separate from behavior changes.
@@ -22,15 +23,25 @@ Remove verified redundant code and simplify local fragments in the Orbit reposit
 
 1. Read `CLAUDE.md`. Check the Git state, the available scripts (`package.json`, `composer.json`, `Makefile`), and the project conventions.
 2. Establish the scope. If none is given, limit yourself to files changed against HEAD (including staged) plus relevant untracked files. If there are no changes and no target, ask for a file, directory, or module. Never start cleaning the whole repository by default.
-3. Find candidates and check their usage with `rg` and project tooling (`npx tsc --noEmit`, ESLint's unused-vars rules). An empty search result alone does not prove code is dead.
+3. Find candidates and check their usage with `rg` and project tooling (`npx tsc --noEmit`). An empty search result alone does not prove code is dead. For the frontend (`resources/js`), run the analyzers first:
+   - `npm run knip` (or `make knip`) reports unused files, exports, types and dependencies; its entries and known false positives are configured in `knip.json`.
+   - `npm run unused` (or `make unused`) reports unused imports and variables. Plain `npm run lint` does not, because `no-unused-vars` is off in `.oxlintrc.json`.
+   - If these scripts do not exist in the checkout (knip not installed yet), fall back to `rg` and `tsc` and say so in the report.
+   - Keep only the findings inside the scope. Findings outside it, and every unused dependency, go into the final report instead of being fixed. knip analyses only JavaScript and TypeScript, so PHP code still needs `rg` and the container and convention checks below.
 4. Before removing anything, account for Orbit's indirect usage:
    - **Inertia pages** are resolved by name from `Inertia::render('Name', …)` — a page file with no import is not dead. Search controllers for the render name.
    - **Laravel container and conventions:** classes bound or resolved by the container, Service Providers, event → listener mappings and auto-discovery in `app/Listeners`, Jobs dispatched by class name, Policies resolved by model, Form Requests type-hinted in controllers, Artisan commands in `app/Console/Commands`, scheduled tasks in `routes/console.php`.
    - **Registries and enums:** integration notifiers/importers implementing `app/Contracts/*`, enum cases used in the database or seeders (permissions, notification types, automation triggers/actions), config keys read via `config()`, Blade views, and route names used through `route()` in PHP or the frontend.
    - **Model members:** accessors, mutators, casts, scopes (`scopeX` called as `->x()`), relationships called as dynamic properties, `$fillable`/`$appends`.
    - **Frontend:** components used through barrel files or dynamic maps, types in `resources/js/types/` shared with tests, and code referenced only from `documentation/en|pl/` guides (update or keep — don't silently break a guide's snippet).
+   - **knip findings are candidates, not proof.** It cannot see usage from `composer.json` scripts, the Makefile, `documentation/` snippets, or anything resolved at runtime by name. An export used only by tests is not reported, because test files count as entries. A symbol used only inside its own file should lose its `export`, not its declaration.
    If you cannot confirm the code is unused, keep it and describe the uncertainty.
-5. Make small, local changes. Remove confirmed unused imports, private symbols, unreachable fragments, or comments that describe code that no longer exists. Simplify only when equivalence is clear.
+5. Make small, local changes. Remove confirmed unused imports, private symbols, unreachable fragments, or comments that describe code that no longer exists. Simplify only when equivalence is clear. For what the analyzers found:
+   - **Unused imports:** run oxlint on the files in scope only: `npx oxlint <files> -A all -W no-unused-vars --fix-suggestions`. `npm run unused:fix` does the same for all of `resources/js`, so use it only when that is the requested scope or the working tree is otherwise clean.
+   - **Unused exports and types:** `npm run knip:fix` only strips the `export` keyword (and orphaned barrel re-exports) and formats what it touches, but across the whole frontend. Run it only for a frontend-wide cleanup or on a clean tree where its diff is exactly the cleanup. Otherwise make the in-scope edits by hand. A declaration that lost its `export` may now be dead: re-run `npm run unused` and remove it after confirming nothing else uses it. `npm run unused:fix:dangerous` also deletes unused variables together with their initializers, so review that diff line by line.
+   - **Unused files:** delete one at a time, after checking `rg`, dynamic imports (`import.meta.glob`), Inertia render names and the documentation guides. Never use `--allow-remove-files`.
+   - **Unused dependencies:** never remove them, since that is a package change. List them in the report.
+   - Format only the files you changed (`npx oxfmt <files>`).
 6. Review the full resulting diff and run appropriate verification.
 
 ## Evaluation rules
@@ -46,8 +57,9 @@ Remove verified redundant code and simplify local fragments in the Orbit reposit
 ## Verification
 
 - Run the existing checks for the changed area, using the repository's commands rather than guessing script names:
-  - Frontend: `npx tsc --noEmit`, `npx eslint <changed files>`, `npx vitest run <affected tests>` (or `make type-check`, `make test-js` in Docker).
+  - Frontend: `npx tsc --noEmit`, `npx oxlint <changed files>`, `npx vitest run <affected tests>` (or `make type-check`, `make test-js` in Docker).
   - Backend: `vendor/bin/pint <changed files>`, `php artisan test --filter=<TestName>` or `composer test` (or `make test` in Docker).
+- After using the analyzers, run `npm run knip` and `npm run unused` again and confirm the in-scope findings are gone and nothing new appeared (a removed `export` can leave a dead declaration). Findings outside the scope are expected to remain.
 - When removing modules or components, also run `npm run build`, which can catch import and bundling errors.
 - Do not add tests just for removing an unused import. For a non-obvious simplification, use a behavior test or drop the change if it cannot be verified reliably.
 - Separate pre-existing failures from regressions caused by your change. Do not fix unrelated problems.
@@ -60,6 +72,6 @@ Briefly state:
 - What was removed or simplified, and in which files.
 - How you confirmed the removed elements are not needed.
 - What verification you ran and with what result; what remains unverified.
-- Which candidates you skipped because of uncertainty or because they were out of scope.
+- Which candidates you skipped because of uncertainty or because they were out of scope, including the knip findings you left alone (unused dependencies, findings outside the scope).
 
 If there are no safe changes, say so plainly. Never generate changes just to produce a diff.
