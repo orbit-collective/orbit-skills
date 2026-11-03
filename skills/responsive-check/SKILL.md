@@ -70,7 +70,7 @@ For broader visual polish beyond responsiveness, use the `frontend-polish` skill
 
 ## Verification and report
 
-- Recheck the fixed scenarios and neighboring sizes. Review the diff and run `npx tsc --noEmit`, `npx eslint resources/js`, and the relevant Vitest tests when interaction changes (or `make type-check`, `make test-js`).
+- Recheck the fixed scenarios and neighboring sizes. Review the diff and run `npx tsc --noEmit`, `npx oxlint resources/js`, and the relevant Vitest tests when interaction changes (or `make type-check`, `make test-js`).
 - Report each finding by page or component, size/state, symptom, impact, and cause. In fix mode, add the fix and the result of the recheck.
 - Give a table of the sizes and states actually checked with a result: OK, problem, or not checked. Never mark skipped checks as passed.
 - Separate browser measurements and observations from conclusions drawn from code. Include screenshots only if you actually took them.

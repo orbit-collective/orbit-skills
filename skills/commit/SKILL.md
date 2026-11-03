@@ -65,7 +65,7 @@ type(scope): description
 
 1. Stage only the planned group. Check the staged diff, the list of paths, any deletions, and `git diff --cached --check`.
 2. Run relevant existing checks if they have not already run for exactly this change. Use the repository's commands and do not install tools on the way:
-   - Frontend: `npx tsc --noEmit`, `npx eslint <changed files>` (Prettier formatting and import/Tailwind class ordering are enforced through lint), `npx vitest run <affected tests>`.
+   - Frontend: `npx tsc --noEmit`, `npx oxlint <changed files>` (run `npx oxfmt --check <changed files>` for formatting), `npx vitest run <affected tests>`.
    - Backend: `vendor/bin/pint --test <changed PHP files>`, `php artisan test --filter=<affected tests>`.
    - In Docker: `make type-check`, `make test-js`, `make test`.
 3. Passing tests on the whole working tree do not prove a partially staged commit works alone. Check what its content depends on; when in doubt, combine dependent changes rather than create an uncertain intermediate state.

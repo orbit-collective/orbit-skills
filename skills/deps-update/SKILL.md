@@ -36,7 +36,7 @@ For each update in groups 2 to 4, read the release notes or changelog between th
 - breaking changes, removed or renamed APIs, changed defaults;
 - new peer dependency ranges (watch for peer conflicts hidden by `--legacy-peer-deps`);
 - dropped Node or PHP versions;
-- config format changes (ESLint flat config, Tailwind, Vite, Vitest coverage options, PHPUnit/Pest config).
+- config format changes (Oxlint/oxfmt config, Tailwind, Vite, Vitest coverage options, PHPUnit/Pest config).
 
 Then search the codebase for the affected APIs (`rg`) to see whether Orbit uses them.
 
@@ -61,7 +61,7 @@ Run all five CI jobs, as in `.github/workflows/ci.yml`, in Docker:
 | CI job | Command |
 | --- | --- |
 | Type check | `make type-check` |
-| Lint | `docker compose run --rm vite npx eslint resources/js` |
+| Lint | `docker compose run --rm vite npx oxlint resources/js` |
 | Component tests | `make test-js-coverage` |
 | Build | `docker compose run --rm vite npm run build` |
 | PHP tests | `make test-coverage` |
